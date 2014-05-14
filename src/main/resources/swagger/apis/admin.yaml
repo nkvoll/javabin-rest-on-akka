@@ -1,0 +1,185 @@
+swaggerVersion: '1.2'
+apiVersion: 0.1.0
+
+resourcePath: /_admin
+
+basePath: http://localhost:8080/api/v0
+
+produces:
+  - application/json
+  - application/yaml
+  - text/xml
+
+consumes:
+  - application/json
+
+apis:
+  - path: /_admin/shutdown/_local
+    description: shut down this server
+    operations:
+      - method: post
+        summary: shuts down this server
+        type: Shutdown
+        nickname: shutdownLocal
+        parameters:
+          - name: delay
+            type: int
+            paramType: query
+            required: false
+            defaultValue: 2
+  - path: /_admin/shutdown/_kill_service
+    description: kill the admin service actor
+    operations:
+      - method: post
+        summary: kills the admin service actor, simulating a failure, it may be restarted
+        type: Shutdown
+        nickname: killService
+        parameters:
+          - name: delay
+            type: int
+            paramType: query
+            required: false
+            defaultValue: 2
+
+  - path: /_admin/_elasticsearch
+    operations:
+      - method: get
+        summary: an interface to access the underlying elasticsearch cluster. requires the "elasticsearch" permission
+        nickname: internalElasticsearch
+
+  - path: /_admin/_elasticsearch/_push_local_templates
+    description: push local templates to elasticsearch
+    operations:
+      - method: post
+        summary: pushes the local index templates to a remote elasticsearch cluster
+        nickname: pushLocalElasticsearchTemplates
+
+  - path: /_admin/shutdown/_local
+    description: shut down this server
+    operations:
+      - method: post
+        summary: shuts down this server
+        type: Shutdown
+        nickname: shutdownLocal
+        parameters:
+          - name: delay
+            type: int
+            paramType: query
+            required: false
+            defaultValue: 2
+
+  - path: /_admin/cluster/state
+    description: get the cluster state
+    operations:
+      - method: get
+        summary: get the cluster state
+        type: ClusterState
+        nickname: getCurrentClusterState
+
+  - path: /_admin/cluster/commands/join
+    description: join the specified node
+    operations:
+      - method: post
+        summary: joins the specified node
+        nickname: clusterJoin
+        notes: the address may be specified either in the body or as a parameter
+        parameters:
+          - name: address
+            paramType: body
+            type: Address
+            required: false
+          - name: address
+            paramType: query
+            type: string
+            description: "example: <code>akka.tcp://javabin-rest-on-akka@127.0.0.1:2551</code>"
+            required: false
+
+  - path: /_admin/cluster/commands/leave
+    description: leave the specified node
+    operations:
+      - method: post
+        summary: leaves the specified node
+        nickname: clusterLeave
+        notes: the address may be specified either in the body or as a parameter
+        parameters:
+          - name: address
+            paramType: body
+            type: Address
+            required: false
+          - name: address
+            paramType: query
+            type: string
+            description: "example: <code>akka.tcp://javabin-rest-on-akka@127.0.0.1:2551</code>"
+            required: false
+
+  - path: /_admin/cluster/commands/down
+    description: down the specified node
+    operations:
+      - method: post
+        summary: downs the specified node
+        nickname: clusterDown
+        notes: the address may be specified either in the body or as a parameter
+        parameters:
+          - name: address
+            paramType: body
+            type: Address
+            required: false
+          - name: address
+            paramType: query
+            type: string
+            description: "example: <code>akka.tcp://javabin-rest-on-akka@127.0.0.1:2551</code>"
+            required: false
+
+models:
+  Address:
+    id: Address
+    properties:
+      proto:
+        type: string
+        required: true
+      system:
+        type: string
+        required: true
+      host:
+        type: string
+        required: true
+      port:
+        type: int
+        required: true
+  Member:
+    id: Member
+    properties:
+      address:
+        type: Address
+        required: true
+      status:
+        type: string
+        required: true
+      roles:
+        type: array
+        items:
+          type: string
+  ClusterState:
+    id: ClusterState
+    properties:
+      members:
+        type: array
+        required: true
+        items:
+          type: Member
+      unreachable:
+        type: array
+        required: true
+        items:
+          type: Member
+      seenBy:
+        type: array
+        required: true
+        items:
+          type: Address
+      leader:
+        type: Address
+        required: false
+      roleLeaderMap:
+        type: object
+        required: true

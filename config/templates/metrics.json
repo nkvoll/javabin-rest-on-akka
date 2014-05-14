@@ -1,0 +1,18 @@
+{
+    "template_metrics" : {
+        "template" : "metrics",
+        "mappings" : {
+            "_default_" : {
+                "_ttl" : {
+                    "enabled" : true
+                },
+                "properties": {
+                    "identifier": {
+                        "type": "string",
+                        "index": "not_analyzed"
+                    }
+                }
+            }
+        }
+    }
+}

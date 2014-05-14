@@ -1,0 +1,29 @@
+swaggerVersion: '1.2'
+apiVersion: 0.1.0
+
+info:
+  title: "Javabin: REST on Akka"
+  description: |
+    <p>A simple service that allows users to send real-time messages to each other.</p>
+  license: MIT
+  licenseUrl: http://opensource.org/licenses/MIT
+
+produces:
+  - application/json
+  - application/yaml
+  - text/xml
+
+apis:
+  - description: Users and attributes
+    path: /users
+  - description: Sending and receiving messages
+    path: /messages
+  - description: Health apis
+    path: /health
+  - description: Admin apis
+    path: /admin
+
+authorizations:
+  basic:
+    type: basicAuth
+    passAs: header

@@ -1,0 +1,18 @@
+<h3>User: <%= username %></h3>
+
+<p><%= identicon(username, 50) %></p>
+
+<form role="form">
+
+    <div class="pull-right">
+        <button class="btn btn-success add-permission"><span class="glyphicon glyphicon-edit"></span> Add permission</button>
+    </div>
+
+    <label for="attributesTextarea">Attributes</label>
+    <textarea id="attributesTextarea" name="attributes" class="codemirror-editor" data-read-only="<%= (!hasEditPermission()).toString() %>"><%= JSON.stringify(attributes, undefined, 4) %></textarea>
+
+<% if(hasEditPermission()) { %>
+    <button type="submit" class="btn btn-primary pull-right"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button>
+<% } %>
+
+</form>

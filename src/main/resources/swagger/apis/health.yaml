@@ -1,0 +1,95 @@
+swaggerVersion: '1.2'
+apiVersion: 0.1.0
+
+basePath: http://localhost:8080/api/v0
+resourcePath: /_health
+
+produces:
+  - application/json
+  - application/yaml
+  - text/xml
+
+consumes:
+  - application/json
+
+apis:
+  - path: /_health/simple/state
+    description: check whether this server is healthy
+    operations:
+      - method: get
+        summary: checks whether this server is healthy
+        nickname: simpleHealthState
+
+  - path: /_health/stats
+    description: http server stats
+    operations:
+      - method: get
+        summary: gets http server stats
+        type: Stats
+        nickname: getHttpStats
+      - method: delete
+        summary: resets http server stats
+        nickname: resetHttpStats
+
+  - path: /_health/state
+    description: get server state
+    operations:
+      - method: get
+        summary: gets server state
+        type: Health
+        nickname: healthState
+
+  - path: /_health/metrics
+    description: get server metrics
+    operations:
+      - method: get
+        summary: gets server metrics
+        nickname: healthMetrics
+        parameters:
+          - name: filter
+            type: string
+            paramType: query
+            required: false
+            description: regex-filter for the metrics to return
+          - name: durationunit
+            type: string
+            paramType: query
+            required: false
+            description: TimeUnit for durations
+          - name: rateunit
+            type: string
+            paramType: query
+            required: false
+            description: TimeUnit for rates
+
+
+models:
+  Stats:
+    id: Stats
+    properties:
+      uptime:
+        type: string
+        required: true
+      totalRequests:
+        type: int
+      openRequests:
+        type: int
+      maxOpenRequests:
+        type: int
+      totalConnections:
+        type: int
+      openConnections:
+        type: int
+      maxOpenConnections:
+        type: int
+      requestTimeouts:
+        type: int
+
+  Health:
+    id: Health
+    properties:
+      healthy:
+        type: boolean
+        required: true
+      states:
+        type: object

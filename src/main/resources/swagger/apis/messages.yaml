@@ -1,0 +1,177 @@
+swaggerVersion: '1.2'
+apiVersion: 0.1.0
+
+basePath: http://localhost:8080/api/v0
+resourcePath: /messages
+
+produces:
+  - application/json
+  - application/yaml
+  - text/xml
+
+consumes:
+  - application/json
+
+apis:
+  - path: /messages/send/{destination}
+    description: sends messages
+    operations:
+      - method: post
+        summary: sends a message
+        type: Message
+        nickname: sendMessage
+        parameters:
+          - name: destination
+            paramType: path
+            type: string
+            required: true
+            description: destination of the message
+          - name: contents
+            paramType: form
+            type: string
+            required: true
+            description: contents of the message to send
+  - path: /messages/message/{id}
+    description: operations for the specified message
+    operations:
+      - method: get
+        summary: looks up the specified message
+        type: Message
+        nickname: getMessageById
+        parameters:
+          - name: id
+            paramType: path
+            type: string
+            required: true
+      - method: delete
+        summary: deletes the specified message
+        type: Message
+        nickname: deleteMessageById
+        parameters:
+          - name: id
+            paramType: path
+            type: string
+            required: true
+  - path: /messages/latest
+    description: the latest messages
+    operations:
+      - method: get
+        summary: gets the latest messages
+        type: Messages
+        nickname: getLatestMessages
+        parameters:
+          - name: filterDelivered
+            paramType: query
+            type: boolean
+            required: false
+            defaultValue: true
+            description: whether to filter delivered messages
+          - name: updateDelivered
+            paramType: query
+            type: boolean
+            required: false
+            defaultValue: true
+            description: if true, updates the delivered flag on the returned messages
+          - name: since
+            paramType: query
+            type: string
+            format: date-time
+            required: true
+            defaultValue: "2014-05-07T22:10:57.637Z"
+            description: datetime cutoff for received messages
+  - path: /messages/receive/poll
+    description: poll for new messages
+    operations:
+      - method: get
+        summary: polls for new messages
+        type: Message
+        nickname: pollForMessages
+        notes: |
+          this request will be completed with one or more messages as soon as they're available. the response
+          conetents are json objects separated by one or more <code>\r\n</code> bytes.
+        parameters:
+          - name: filterDelivered
+            paramType: query
+            type: boolean
+            required: false
+            defaultValue: true
+            description: whether to filter delivered messages
+          - name: updateDelivered
+            paramType: query
+            type: boolean
+            required: false
+            defaultValue: true
+            description: if true, updates the delivered flag on the returned messages
+          - name: since
+            paramType: query
+            type: string
+            format: date-time
+            required: true
+            defaultValue: "2014-05-07T22:10:57.637Z"
+            description: datetime cutoff for received messages
+  - path: /messages/receive/cat
+    description: cats new messages
+    operations:
+      - method: get
+        summary: cats new messages
+        type: Message
+        nickname: catMessages
+        notes: |
+          <p>this request will be kept open and messages will be written to it as json objects as soon as they
+          are available. the response contents are json objects separated by one or more <code>\r\n</code> bytes.</p>
+
+          <p>the first message should be <code>{"ok":true,"streaming":true}</code>, and the stream includes occational
+          keep-alive messages: <code>{"ok":true,"keepAlive":true}</code> as well.</p>
+
+          <p>messages are serialized according to the default <code>Message</code> model</p>
+        parameters:
+          - name: filterDelivered
+            paramType: query
+            type: boolean
+            required: false
+            defaultValue: true
+            description: whether to filter delivered messages
+          - name: updateDelivered
+            paramType: query
+            type: boolean
+            required: false
+            defaultValue: true
+            description: if true, updates the delivered flag on the returned messages
+          - name: since
+            paramType: query
+            type: string
+            format: date-time
+            required: true
+            defaultValue: "2014-05-07T22:10:57.637Z"
+            description: datetime cutoff for received messages
+
+models:
+  Message:
+    id: Message
+    properties:
+      id:
+        type: string
+      created:
+        required: true
+        type: string
+        format: date-time
+      source:
+        type: string
+        required: true
+      destination:
+        type: string
+        required: true
+      contents:
+        type: string
+        required: true
+      delivered:
+        type: boolean
+        required: false
+  Messages:
+    id: Messages
+    properties:
+      messages:
+        type: array
+        required: true
+        items:
+          type: Message

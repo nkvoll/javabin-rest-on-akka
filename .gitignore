@@ -1,0 +1,12 @@
+.idea/
+.idea_modules/
+data/
+*.log
+project/project/
+project/target/
+target/
+app/_build/javabin
+app/_build/vendor
+app/_build/build.txt
+tags
+TAGS

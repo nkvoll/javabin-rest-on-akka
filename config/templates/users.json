@@ -1,0 +1,39 @@
+{
+    "template_users" : {
+        "template" : "users",
+        "settings" : {
+            "analysis": {
+                "analyzer": {
+                    "username_ngram": {
+                        "tokenizer": "username_ngram"
+                    }
+                },
+                "tokenizer": {
+                    "username_ngram": {
+                        "type": "nGram",
+                        "min_gram": 2,
+                        "max_gram": 4
+                    }
+                }
+            }
+        },
+        "mappings" : {
+            "_default_" : {
+                "_source" : {
+                    "enabled" : true
+                },
+                "properties": {
+                    "username": {
+                        "type": "string",
+                        "fields": {
+                            "ngram": {
+                                "type": "string",
+                                "analyzer": "username_ngram"
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

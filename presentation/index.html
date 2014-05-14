@@ -1,0 +1,2148 @@
+<!doctype html>
+<html lang="en" xmlns="http://www.w3.org/1999/html">
+
+	<head>
+		<meta charset="utf-8">
+
+		<title>Javabin Bergen: Rest on Akka</title>
+
+		<meta name="apple-mobile-web-app-capable" content="yes" />
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<link rel="stylesheet" href="css/reveal.min.css">
+		<link rel="stylesheet" href="css/theme/default.css" id="theme">
+
+		<!-- For syntax highlighting -->
+
+		<link rel="stylesheet" href="lib/css/solarized_dark.css">
+
+        <style type="text/css">
+            .reveal section img {
+                margin: 15px 0px;
+                background: none;
+                border: none;
+                box-shadow: none;
+                -webkit-transition: all .2s linear;
+                -moz-transition: all .2s linear;
+                -ms-transition: all .2s linear;
+                -o-transition: all .2s linear;
+                transition: all .2s linear; }
+
+            .scrollable-image {
+                overflow: auto;
+
+                max-width: 800px;
+                max-height: 600px;
+            }
+
+            .scrollable-image > img {
+                /* override the default limits on image sizes */
+                max-width: 9999px;
+                max-height: 9999px;
+            }
+
+            .no-bullet {
+                list-style-type: none;
+            }
+        </style>
+
+		<!-- If the query includes 'print-pdf', include the PDF print sheet -->
+		<script>
+			if( window.location.search.match( /print-pdf/gi ) ) {
+				var link = document.createElement( 'link' );
+				link.rel = 'stylesheet';
+				link.type = 'text/css';
+				link.href = 'css/print/pdf.css';
+				document.getElementsByTagName( 'head' )[0].appendChild( link );
+			}
+		</script>
+
+		<!--[if lt IE 9]>
+		<script src="lib/js/html5shiv.js"></script>
+		<![endif]-->
+	</head>
+
+	<body>
+    <div class="share-reveal" style="display: block; position: absolute; bottom: 0px; left: 0px; margin-left: 0px; z-index: 20;">
+        <a href="https://www.found.no"><img src="images/found_logo.png" style="width: 80px; padding: 5px; margin-left: 5px;" /></a>
+    </div>
+
+		<div class="reveal">
+
+			<!-- Any section element inside of this container is displayed as a slide -->
+			<div class="slides">
+				<section>
+					<h1>Rest on Akka</h1>
+					<h3>Javabin Bergen</h3>
+					<p>
+						<small>Presented by <a href="https://www.found.no">Njal Karevoll</a> / <a href="http://twitter.com/nkvoll">@nkvoll</a><br />with some great slides from <a href="https://twitter.com/sirthias">@sirthias</a> (Mathias Doenitz)</small>
+					</p>
+				</section>
+
+                <!--
+                TODO:
+
+- Mentionables:
+	- sprayers
+		- vmware, ebay, ulm university
+
+
+	- stuff from latest presentation: http://spray.io/zse
+	    - use the introduction
+	    - include future stuffs
+	    - also: spray new structure:
+		    -http://osdir.com/ml/akka/2013-10/msg00337.html
+
+Move history first - provide context?
+
+Demos:
+    - Short video demo of app? Or real-time?
+        - parsing + computation + lookups !calc, !wiki, !define
+        - Demo other stuff as well?
+        - Metrics
+        - Clustering
+        - Elasticsearch / Kopf
+        - Kibana
+
+                -->
+
+                <section>
+                    <h2>About me</h2>
+                    <p>Master of Science and Technology from <a href="https://www.ntnu.no/">NTNU</a></p>
+                    <p>Co-founder of <a href="https://www.found.no">Found AS</a></p>
+                    <p>&nbsp</p>
+                    <div class="fragment">
+                        <p>Currently <small>but always changing</small></p>
+                        <p>Java, Scala, Python, Javascript</p>
+                        <p>
+                            <a href="http://netty.io/">Netty</a>,
+                            <a href="http://www.elasticsearch.org/">Elasticsearch</a>,
+                            <a href="http://akka.io/">Akka</a>,
+                            <a href="http://spray.io/">Spray</a>,
+                            <a href="http://zookeeper.apache.org/">ZooKeeper</a>,
+                            <a href="https://twistedmatrix.com/trac/">Twisted</a>
+                        </p>
+                    </div>
+                    <aside class="notes">zookeeper = highly reliable distributed coordination</aside>
+                </section>
+
+                <section data-markdown>
+                    <script type="text/template">
+                        ## Agenda
+
+                        - Akka
+                        - Spray
+                          - Modelling
+                          - Serving
+                          - Routing
+                        - REST
+
+                        Note: --
+                            - Links in presentation for further learning.
+                            - questions along the way
+                    </script>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>the stage</h2>
+                        <ul>
+                            <li>Hardware</li>
+                            <li>Scaling</li>
+                            <li>Tooling</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>Imagine this task</h2>
+                        <p>You are to build a business application</p>
+                        <img class="fragment" style="width:70%; background-color: #002b36" src="images/application-and-clients0.svg" alt="application">
+                        <img class="fragment" style="position: absolute; width:70%; margin-left: -70%" src="images/application-and-clients1.svg" alt="application">
+                        <img class="fragment" style="position: absolute; width:70%; margin-left: -70%" src="images/application-and-clients2.svg" alt="application">
+                        <img class="fragment" style="position: absolute; width:70%; margin-left: -70%" src="images/application-and-clients3.svg" alt="application">
+                    </section>
+
+                    <section>
+                        <h2>This is your hardware</h2>
+                        <div style="background-color: #002b36; z-index: 0">
+                        <img class="fragment" data-fragment-index="2" style="width:70%; z-index: 2" src="images/hardware1.svg" alt="application">
+                        <img class="fragment" data-fragment-index="1" style="position: absolute; margin-left: -70%; width:70%; z-index: 3" src="images/hardware0.svg" alt="application">
+                        <img class="fragment" style="position: absolute; width:70%; margin-left: -70%" src="images/hardware2.svg" alt="application">
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2>Challenges</h2>
+                        <ul>
+                            <li>How to scale gradually?
+                                <ul>
+                                    <li>vertically (up, across cores of one machine)</li>
+                                    <li>horizontally (out, across many machines)</li>
+                                </ul>
+                            </li>
+                            <li>How to react to
+                                <ul>
+                                    <li>hardware failures?</li>
+                                    <li>software failures?</li>
+                                    <li>network failures?</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>How do you do it?</h2>
+                        <ul>
+                            <li class="fragment">What language(s) do you use?</li>
+                            <li class="fragment">What tools/libraries do you use?</li>
+                            <li class="fragment">More generally:<br/>What programming paradigm?</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>The scenario is real!</h2>
+                        <div class="fragment">
+                            <img style="margin-top: 0em; background-color: #002b36" src="images/moore.svg" alt="35 years of CPU trends">
+                            <div style="position: absolute; margin: -59% 0 0 12%">
+                                <span>CPU trends over 35 years</span><br/>
+                                <small>Source: <a href="http://www.lanl.gov/orgs/hpc/salishan/salishan2011/3moore.pdf">Chuck Moore</a></small>
+                            </div>
+                        </div>
+                        <div class="fragment" style="position: absolute; margin: -40% 0 0 28%; padding: 0.4em; border: 1px solid #eee8d5; background-color: #002b36">
+                            <a href="http://www.gotw.ca/publications/concurrency-ddj.htm">"The free lunch is over!"</a>
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2>The new opponent: Amdahl's Law</h2>
+                        <img class="fragment" style="width: 70%; margin-top: 0em; background-color: #002b36" src="images/amdahl.svg" alt="Amdahl's Law">
+                        <div class="fragment" style="position: absolute; margin: -43% 0 0 32%; padding: 0.4em; color: #002b36; background-color: #eee8d5; font-weight: bold">
+                            Parallelisation is key!
+                        </div>
+                    </section>
+
+                    <section>
+                        <h2>Our old tools don't cut it</h2>
+                        <ul>
+                            <li class="fragment">Threads (programmed directly)
+                                <ul>
+                                    <li>high memory overhead</li>
+                                    <li>starting/stopping is expensive</li>
+                                    <li>inter-thread communication entirely left to the user</li>
+                                </ul>
+                            </li>
+                            <li class="fragment">Locks/Mutexes/Semaphores/`synchronized`/`volatile`
+                                <ul>
+                                    <li>too little sync: race conditions, wrong results</li>
+                                    <li>too much sync: deadlocks, poor performance</li>
+                                    <li>very hard to use correctly</li>
+                                </ul>
+                            </li>
+                            <h3 class="fragment" style="position: absolute; margin: -30% 0 0 20%; padding: 0.4em; border-top: 2px solid white; border-bottom: 2px solid white; background-color: #002b36; -webkit-transform:rotate(30deg); -moz-transform:rotate(30deg)">We need something better!</h3>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>The Core Problem</h2>
+                        <img class="fragment" style="width:60%; background-color: #002b36" src="images/state0.svg" alt="Shared Mutable State">
+                        <img class="fragment" style="position: absolute; width:60%; margin-left: -60%" src="images/state1.svg" alt="Shared Mutable State">
+                        <img class="fragment" style="position: absolute; width:60%; margin-left: -60%" src="images/state2.svg" alt="Shared Mutable State">
+                        <img class="fragment" style="position: absolute; width:60%; margin-left: -60%" src="images/state0.svg" alt="Shared Mutable State">
+                        <img class="fragment" style="position: absolute; width:60%; margin-left: -60%" src="images/state3.svg" alt="Shared Mutable State">
+                        <img class="fragment" style="position: absolute; width:60%; margin-left: -60%" src="images/state4.svg" alt="Shared Mutable State">
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Part 0</h2>
+                    <h4>Topics</h4>
+                    <p>Prerequisites</p>
+                    <p>The why and what</p>
+                </section>
+
+                <section>
+                    <h2>Prerequisites</h2>
+                    <ul>
+                        <li>Scala</li>
+                        <li>Akka</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Scala</h2>
+                        <p>Object-Oriented Meets Functional</p>
+                    </section>
+                    <section>
+                    <h2>Scala - case classes</h2>
+                        <pre style="width: 70%"><code data-trim class="scala">
+case class User(username: String, password: String)
+                        </code></pre>
+                        <ul>
+                            <li>Immutable</li>
+                            <li>Exports their constructor parameters</li>
+
+                            <li>Usable in pattern matching: <code class="scala">case User(name, _) =></code></li>
+                            <li>Generated <code>copy</code>, <code>equals</code>, <code>hashCode</code>, <code>toString</code>, etc</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Scala - implicits</h2>
+                        <pre><code class="scala" data-trim>
+def output(n: Int)(implicit stream: OutputStream) = stream.write(n)
+
+output('A')(System.out) // prints A to stdout
+
+implicit val out = System.out
+output('B') // prints B to stdout
+                        </code></pre>
+                        <ul>
+                            <li>Leave out tedious / obvious details</li>
+                            <li>Uses implicit resolution rules</li>
+                            <li>See <a href="http://www.artima.com/pins1ed/implicit-conversions-and-parameters.html">Implicit Conversions and Parameters</a></li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Scala - Future[T]</h2>
+                        <pre style="width: 100%"><code class="scala" data-trim>
+import scala.concurrent.ExecutionContext.Implicits.global
+
+val future = Future.successful("Hello")
+val upperCased = future.map(_.toUpperCase) // Future[String]
+val length = future.map(_.length) // Future[Int]
+
+upperCased onComplete { println(_) }
+                        </code></pre>
+                        <ul>
+                            <li>Immutable</li>
+                            <li>Composable</li>
+                            <li>And much more, see <a href="http://doc.akka.io/docs/akka/snapshot/scala/futures.html">Futures</a></li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Scala - Type classes</h2>
+                        <pre><code class="scala" style="max-height: 600px" data-trim>
+trait Printable[T] {
+  def print(t: T)
+}
+
+object Printable {
+  def print[T](t: T)(implicit printable: Printable[T]) = printable.print(t)
+
+  implicit val stringPrintable = new Printable[String] {
+    def print(t: String) = println("This is a string: " + t)
+  }
+  implicit def listPrintable[T](implicit tPrintable: Printable[T]) =
+    new Printable[List[T]] {
+      def print(tList: List[T]) = tList.foreach(tPrintable.print)
+    }
+}
+
+scala> Printable.print("foo")
+This is a string: foo
+
+scala> Printable.print(List("foo", "bar"))
+This is a string: foo
+This is a string: bar
+                        </code></pre>
+                        <ul>
+                            <li>Extending without modifying</li>
+                            <li>See <a href="http://danielwestheide.com/blog/2013/02/06/the-neophytes-guide-to-scala-part-12-type-classes.html">Neophyte's Guide to Scala </a></li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Scala - Magnet pattern</h2>
+                        <p>Type classes applied to function arguments</p>
+                        <pre><code class="scala" data-trim style="font-size:80%; line-height: 1; max-height: 600px">
+def getLength(lm: LengthMagnet) = lm.length
+
+trait LengthMagnet {
+  def length: Int
+}
+object LengthMagnet {
+  implicit def fromUnit(l: Unit) = new LengthMagnet { def length = 0 }
+  implicit def fromString(s: String) =
+    new LengthMagnet { def length = s.length }
+  implicit def formIntList(il: List[Int]) =
+    new LengthMagnet { def length = il.sum }
+  implicit def fromStringList(sl: List[String]) =
+    new LengthMagnet { def length = sl.map(_.length).sum }
+}
+
+getLength() // 0
+getLength("foo") // 3
+getLength(List(1,2,3)) // 6
+getLength(List("foo", "bar")) // 6
+                        </code></pre>
+                        <ul>
+                            <li>Extending without modifying</li>
+                            <li>Solves type erasure by binding compile-time</li>
+                            <li>See <a href="http://spray.io/blog/2012-12-13-the-magnet-pattern/">The Magnet Pattern</a></li>
+                        </ul>
+                        <aside class="notes"><pre>- also solves optional implicits with block afterwards</pre></aside>
+                    </section>
+
+                    <section>
+                        <h2>Scala - Enriching / Pimping</h2>
+                        <pre><code class="scala" data-trim>
+object MyPimps {
+  implicit class RichNumeric[T](val t: T) extends AnyVal {
+    // may depend on additional parameters (Numeric[T] is a typeclass)
+    def doubled(implicit n: Numeric[T]) = n.plus(t, t)
+  }
+}
+// bring the enrichment into scope
+import MyPimps._
+
+3.doubled // : Int = 6
+2.4.doubled // : Double = 4.8
+                        </code></pre>
+                        <ul>
+                            <li>Resolved compile-time</li>
+                            <li>No allocation when extending AnyVal</li>
+                            <li>See <a href="http://www.artima.com/weblogs/viewpost.jsp?thread=179766">Pimp my Library</a></li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Scala - Shapeless</h2>
+                        <p>Powerful generics for Scala</p>
+                        <pre><code class="scala" data-trim style="font-size: 80%; max-height: 600px">
+import shapeless._
+
+scala> val someList = List(1, "foo", true)
+someList: List[Any] = List(1, foo, true)
+
+scala> someList.head
+res0: Any = 1
+
+scala> val someHList = HList(1, "foo", true)
+someHList: shapeless.::[Int,shapeless.::[String,shapeless.::[Boolean,shapeless.HNil]]]
+                            = 1 :: foo :: true :: HNil
+
+scala> someHList.head
+res1: Int = 1
+                        </code></pre>
+                        <ul>
+                            <li>Heterogenous lists</li>
+                            <li>Has a lot more to offer as well</li>
+                            <li>See <a href="https://github.com/milessabin/shapeless/">github.com/milessabin/shapeless</a></li>
+                        </ul>
+                        <aside class="notes"><pre>- also solves optional implicits with block afterwards</pre></aside>
+                    </section>
+
+                    <section>
+                        <h2>Scala - Learning more</h2>
+                        <p>Want to learn more about Scala?</p>
+
+                        <h3>Books</h3>
+                        <ul>
+                            <li><a href="http://www.manning.com/suereth/">Scala in Depth</a> - Joshua D. Suereth </li>
+                        </ul>
+                        <p>&nbsp;</p>
+
+                        <h3>Courses</h3>
+                        <ul>
+                            <li><a href="https://www.coursera.org/course/progfun">Functional Programming Principles in Scala</a></li>
+                            <li><a href="https://www.coursera.org/course/reactive">Principles of Reactive Programming</a></li>
+                        </ul>
+                        <p>&nbsp;</p>
+
+                        <h3>Web+</h3>
+                        <ul>
+                            <li><a href="http://danielwestheide.com/scala/neophytes.html">The Neophyte's Guide to Scala</a> - Daniel Westheide</li>
+                            <li><a href="http://twitter.github.io/scala_school/">Twitter Scala School</a></li>
+                        </ul>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2><a href="http://akka.io">Akka</a></h2>
+                        <p>
+                            "A toolkit and runtime for building<br/>
+                            highly concurrent, distributed, and fault-tolerant<br/>
+                            event-driven applications on the JVM"
+                        </p>
+                        <ul class="fragment">
+                            <li>Actors</li>
+                            <li>Mailboxes</li>
+                            <li>Dispatchers</li>
+                        </ul>
+                        <aside class="notes">
+                            <pre>
+                        - Actors
+                            - sending/ receiving messages
+                            - ordering
+                            - let it crash
+                        - Mailboxes
+                            - queue of incoming messages
+                            - implementation may vary
+                        - Dispatchers
+                            - threads/pools that drives the actors
+                            </pre>
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Akka: Actor</h2>
+                        <ul>
+                            <li>a lightweight isolated "process"</li>
+                            <li>contains state and "behavior"</li>
+                            <li>communicates only via async &amp; immutable messages<br/>(share nothing)</li>
+                            <li>has a mailbox (message queue)</li>
+                            <li>is supervised by its parent (for managing failure)</li>
+                            <li>is location transparent (distributable)</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                      <h2>Akka: An Actor in Scala</h2>
+                      <pre style="width: 65%"><code class="scala" data-trim>
+class CountingActor extends Actor {
+  var counter = 0
+  def receive = {
+    case "ping"  ⇒ println("received ping")
+    case "count" ⇒ counter += 1
+    case "get"   ⇒ sender ! counter
+  }
+}
+                      </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Actors vs. Objects</h2>
+                        <ul>
+                            <li class="no-bullet">An actor <em>is</em> an object, but</li>
+                            <li>you can't peek inside it</li>
+                            <li>you don't call methods (but send messages)</li>
+                            <li>you don't get return values (but receive messages)</li>
+                            <li>is internally thread-safe</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Akka: Actor Benefits</h2>
+                        <ul>
+                            <li><a href="https://twitter.com/taidevcouk/status/382212913458475009">"An island of sanity in a sea of concurrency"</a>
+                                <ul>
+                                    <li>processes one message at a time</li>
+                                    <li>runs purely sequential easy-to-understand logic</li>
+                                </ul>
+                            </li>
+                            <li>very lightweight (~400 bytes)</li>
+                            <li>can be constructed and torn down very quickly</li>
+                            <li>leaves scheduling complexities to runtime</li>
+                            <li>promotes high-granularity modulization</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Akka: Patterns</h2>
+                        <p>Ask pattern returns a future response from an actor</p>
+                        <pre><code class="scala">val f: Future[User] = userService ? GetUser(username)</code></pre>
+                        <p>Pipe patterns returns the result of a future to another actor</p>
+                        <pre><code class="scala">database.queryUserAsync("select ...").pipeTo(sender)</code></pre>
+                        <aside class="notes">
+                            <pre>
+                                - ask downsides -> intermediate actor
+                                - pipe handles failures as well
+                            </pre>
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Akka: Patterns</h2>
+                        <p>Command pattern</p>
+                        <pre><code data-trim style="font-size: 80%" class="scala">
+trait Command[Rep] {
+  def request(actor: ActorRef)(implicit timeout: Timeout, ct: ClassTag[Rep]): Future[Rep] =
+    actor.ask(this)(timeout).mapTo[Rep]
+
+  def reply(rep: Rep): Rep = rep
+}
+
+case class GetUser(username: String) extends Command[User]
+
+val user: Future[User] = GetUser("foo").request(userService)
+
+case cmd @ GetUser(username) => dbService.queryUserAsync(...).map(cmd.reply).pipeTo(sender)
+                        </code></pre>
+                        <aside class="notes">
+                            <pre>
+                                - add reply overloads as required
+                            </pre>
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Akka: A different programming paradigm</h2>
+                        <ul>
+                            <li class="no-bullet" style="list-style-type: none">well-suited for building <em>reactive</em> systems that are</li>
+                            <li>event-driven</li>
+                            <li>scalable</li>
+                            <li>resilient</li>
+                            <li>responsive</li>
+                            <li class="no-bullet" style="list-style-type: none"><i class="fa fa-reply fa-rotate-180"></i>&nbsp; <a href="http://www.reactivemanifesto.org/">http://www.reactivemanifesto.org/</a></li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Akka: more than just actors</h2>
+                        <ul>
+                            <li>Scala- and Java APIs across the board</li>
+                            <li><em>akka-actor</em>: actors</li>
+                            <li><em>akka-cluster</em>: fault-tolerant, decentralized<br/>peer-to-peer cluster membership service</li>
+                            <li><em>akka-io</em>: low-level network IO (TCP and UDP)</li>
+                            <li><em>akka-persistence</em>: event-sourcing (coming soon)</li>
+                            <li><em>akka-http</em>: HTTP/REST (soon, today: <a href="http://spray.io">http://spray.io</a>)</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Akka - Learning more</h2>
+                        <p>Want to learn more about Akka?</p>
+
+                        <p>No better place than <a href="http://akka.io/docs/">Akka Docs</a></p>
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>HTTP is Easy&trade;</h2>
+
+                        <ul>
+                            <li>
+                                Requesting
+                                <ul>
+                                    <li><code>Method Request-URI HTTP-Version</code></li>
+                                    <code><span class="fragment">HEAD</span> <span class="fragment">/</span> <span class="fragment">HTTP/1.1</span></code>
+                                </ul>
+                            </li>
+                            <li>
+                                Responding
+                                <ul>
+                                    <li><code>HTTP-Version Status-Code Reason-Phrase</code></li>
+                                    <code><span class="fragment">HTTP/1.1</span> <span class="fragment">200</span> <span class="fragment">OK</span></code></li>
+                                </ul>
+                            </li>
+                        </ul>
+
+                        <p>&nbsp;</p>
+
+                        <div class="fragment">
+                            <p>..except it's not <b>that</b> easy:</p>
+
+                            <p>Formal specification of HTTP (1.1) is in <a href="https://tools.ietf.org/html/rfc2616">RFC2616</a> (~350 pages)</p>
+
+                            <p>See <a href="https://github.com/for-GET/http-decision-diagram">github.com/for-GET/http-decision-diagram</a></p>
+                        </div>
+
+                    </section>
+
+                    <section>
+                        <div class="scrollable-image">
+                            <img src="images/httpdd.png" />
+                        </div>
+                    </section>
+
+                    <section data-background="images/httpdd.png" data-background-size="960px">
+                    </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Enter <a href="http://spray.io/">Spray</a></h2>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## What is Spray?
+
+                            - embeddable HTTP-stack for your Akka applications
+                            - focuses on HTTP integration layers rather than web applications
+                            - both server and client side
+
+
+                            Note: --
+                            - not a framework or server per se, it's just a (collection of libraries)
+                            - i.e how your service would interface with HTTP requests, no templating / database connectivity etc
+                            - example: you have a current application that would need to access other services or let other services access it.
+                            - http as a de-facto communication standard -- language-agnostic
+                            - server and client side
+                            - contains both a server to parse incoming requests, but also a client to handle outbound http requests
+
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Why Spray?
+
+                            - Doing HTTP on the JVM isn't a novel thing:
+                              - <a href="http://netty.io/">Netty</a>, <a href="http://en.wikipedia.org/wiki/Java_Servlet">Servlets</a>, <a href="http://restlet.org/">Restlet</a>, <a href="http://undertow.io/">Undertow</a>, <a href="http://hc.apache.org/httpclient-3.x/">Apache HttpClient</a>, <a href="http://twitter.github.io/finagle/">Finagle</a>, <a href="http://sockoweb.org/">Socko</a>, <a href="http://www.playframework.com/">Play</a>, <a href="http://unfiltered.databinder.net/Unfiltered.html">Unfiltered / unfiltered directives</a>, <a href="http://vertx.io/">vert.x</a>, ...
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ## Why Spray?
+
+                            - Why not just use what's already out there?
+
+                            <img src="images/standards.png"/> <!-- .element: class="fragment current-visible" -->
+
+                            - Yes, we can.. but do we want to? <!-- .element: class="fragment" style="margin-top: -100%" -->
+                              - servlet-containers
+                              - xml-configuration
+                              - mutable data-models
+                              - java collections
+                              - limited type-safety
+
+                            Note: --
+
+                            - servlet-containers? - (would like it more lightweight)
+                            - xml-configuration? - (preference -- maybe)
+                            - mutable data-models? - (testability and guarantees)
+                            - java collections? - (annoying in 1.7, definitely better in 1.8)
+                            - limited type-safety? - (status codes, uris paths, headers)
+
+                            - netty: great piece of software
+                            - guys sure know what they are doing
+                            - still, its written in Java, with a Java-style API
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                          ### What do (Scala) developers want?
+
+                          - `case class` based model
+                          - Actor-based apis
+                          - non-blocking
+                          - composability
+                          - type classes
+                          - type safety
+
+                          Note: --
+                          - case class based model
+                            - enforces immutability
+                          - actor-based apis
+                            - leverages multiple cores, easy to use per-actor message receiving
+                            - fits especially well if you already have an akka application (but not strictly required)
+                          - functions as values
+                          - scala futures and collections
+                            - avoids blocking to improve performance
+                          - type classes
+                            - ability to provide additonal functionality from the outside
+                            - decouples logic and makes it easier to test
+                          - type safety
+                            - compiles -> works is great, let's have more of that
+
+                          ## could get far by wrapping Java tools
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### What more do we want?
+
+                            - unified thread-pool mgmt. (<a href="http://doc.akka.io/docs/akka/2.2.3/java/dispatchers.html">Akka dispatchers</a>)
+                            - unified configuration (<a href="https://github.com/typesafehub/config">Typesafe config</a>)
+                            - unified logging (<a href="http://doc.akka.io/docs/akka/2.2.3/scala/event-bus.html">Akka event bus</a>)
+                            - unified debugging / optimization<br/>
+                                (e.g. with <a href="http://typesafe.com/platform/runtime/console">Typesafe console</a>)
+
+                            - easy testability on all layers (<a href="http://doc.akka.io/docs/akka/snapshot/scala/testing.html">Akka TestKit</a>, <a href="http://spray.io/documentation/1.2.1/spray-testkit/">Spray TestKit</a>)
+                        </script>
+                    </section>
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### Building on Akka
+
+                            - the whole application, not just a few parts
+                            - same principles, concepts and coding in all layers of our stack
+                                - easier problem analysis, tuning
+                                - less time spent reading and (re-)learning concepts
+                        </script>
+                    </section>
+
+
+                    <section data-markdown>
+                        <script type="text/template">
+                            ### This is Spray
+
+                            - Completely built in Scala, does not wrap any Java libraries
+                            - Fully asynchronous and non-blocking
+                            - Only one type of active component: *Actors*
+                            - Core API is built using message protocol
+                            - Actor-friendly (e.g "tell, dont ask")
+                            - Fast, light-weight, modular, testable
+
+                            Note: --
+
+                            - dns lookup still blocking
+                            - integration with akka-based application is completely seamless
+                            - few dependencies
+                        </script>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Part 1</h2>
+                    <h4>Topics</h4>
+                    <p>Domain model - spray-http</p>
+                    <p>Getting a server up and running</p>
+                </section>
+
+                <section>
+                    <h2>spray components</h2>
+                    <img style="width:80%; background-color: #002b36" src="images/spray-components0.svg" alt="spray components">
+                    <p>plus: <emph>spray-servlet</emph>, <emph>spray-testkit</emph>, ...</p>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>HTTP model</h2>
+                        <ul>
+                            <li>`case class`-based data model</li>
+                            <li>high-level abstractions for most things HTTP</li>
+                            <li>fully immutable, little logic</li>
+                            <li>predefined instances for common media types, status codes, encodings, charsets, cache-control directives, etc.</li>
+                            <li>open for extension<br/>
+                                (e.g. registration of custom media types)</li>
+                        </ul>
+                        <aside class="notes">
+                            <pre>
+                                - works well as a message between actors
+                                - serializable
+                                - renderable
+                            </pre>
+                        </aside>
+                    </section>
+
+                <section>
+                    <h2>HTTP model: show me code</h2>
+				  <pre style="width: 75%"><code class="scala" data-trim>
+case class HttpRequest(
+  method: HttpMethod = HttpMethods.GET,
+  uri: Uri = Uri./,
+  headers: List[HttpHeader] = Nil,
+  entity: HttpEntity = HttpEntity.Empty,
+  protocol: HttpProtocol = HttpProtocols.`HTTP/1.1`
+) extends HttpMessage
+                  </code></pre>
+                    <aside class="notes">
+                        <pre>
+                            - it's all typed, not basic types such as ints and strings
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <h2>HTTP model: show me code</h2>
+				  <pre style="width: 75%"><code class="scala" data-trim>
+case class HttpResponse(
+  status: StatusCode = StatusCodes.OK,
+  entity: HttpEntity = HttpEntity.Empty,
+  headers: List[HttpHeader] = Nil,
+  protocol: HttpProtocol = HttpProtocols.`HTTP/1.1`
+) extends HttpMessage
+                  </code></pre>
+                </section>
+
+                <section>
+                    <h2>HTTP model: show me code</h2>
+				  <pre style="width: 70%"><code class="scala" data-trim>
+case class Uri(             // proper RFC 3986
+  scheme: String,           // compliant,
+  authority: Authority,     // immutable
+  path: Path,               // URI model
+  query: Query,             // with a fast,
+  fragment: Option[String]) // custom parser
+                  </code></pre>
+                    <p>See <a href="http://www.ietf.org/rfc/rfc3986.txt">RFC 3986</a></p>
+                    <aside class="notes">
+                        <pre>
+                            -
+                            - RFC 3986 (Uniform Resource Identifier (URI): Generic Syntax)
+                            - Most headers modeled (type-safe .copy etc)
+                            - also typed (except fragment, which is really custom data by definition)
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <h2>HTTP model: show me code</h2>
+				  <pre><code class="scala" data-trim>
+case class `Accept-Charset`(charsetRanges: Seq[HttpCharsetRange])
+    extends HttpHeader
+
+case class `Accept-Encoding`(encodings: Seq[HttpEncodingRange])
+    extends HttpHeader
+
+case class `Set-Cookie`(cookie: HttpCookie)
+    extends HttpHeader
+
+case class RawHeader(name: String, value: String)
+    extends HttpHeader
+                  </code></pre>
+                    <aside class="notes">
+                        <pre>
+                            - Most headers modeled (type-safe .copy etc)
+                            - custom headers are instances of RawHeader(name: String, value: String)
+                            - back-ticks in name might look weird, but allows Scala to use identifiers that would otherwise be invalid
+                            - matches the actual header names instead of CamelCasingOnDashes
+                        </pre>
+                    </aside>
+                </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>The IO stack</h2>
+                        <img style="width: 50%; background-color: #002b36" src="images/io-stack.svg" alt="IO stack">
+                    </section>
+
+                    <section>
+                        <h2>Detour through Akka IO</h2>
+                        <ul>
+                            <li>used to be spray-io</li>
+                            <li>redesigned and improved as akka-io in akka 2.2</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Towards Akka IO (briefly)</h2>
+                        <ul>
+                            <li class="no-bullet">network communication is</li>
+                            <li>packet-based</li>
+                            <li>no continuous flow of bytes</li>
+                            <li>rather: chunked into messages</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Towards Akka IO (2)</h2>
+                        <ul>
+                            <li class="no-bullet">old-school Java IO (before NIO): stream-based</li>
+                            <li>input: read a stream,<br/>
+                                block if no data</li>
+                            <li>output: write to stream,<br/>
+                                block if sending is not currently possible</li>
+                            <li class="no-bullet"><i class="fa fa-reply fa-rotate-180"></i>&nbsp; paradigm mismatch: stream-based vs. message based</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Towards Akka IO (3)</h2>
+                        <ul>
+                            <li class="no-bullet">Java NIO ("new" IO):</li>
+                            <li>extended API with support for<br/>
+                                async, non-blocking IO ops</li>
+                            <li>but:
+                                <ul>
+                                    <li>hard to use</li>
+                                    <li>still not message-based</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2 style="margin-bottom:0">Akka IO</h2>
+                        <ul>
+                            <li style="font-size:0.8em">bridges the gap between Java NIO and Akka actors</li>
+                            <li style="font-size:0.8em; padding-top:0">msg-based API surfaces the nature of the network</li>
+                        </ul>
+                        <img class="fragment" style="width:100%; background-color: #002b36" src="images/akka-io0.svg" alt="Akka IO">
+                        <img class="fragment" style="width:100%; position:absolute; margin-left:-95%" src="images/akka-io1.svg" alt="Akka IO">
+                        <img class="fragment" style="width:100%; position:absolute; margin-left:-95%" src="images/akka-io2.svg" alt="Akka IO">
+                        <img class="fragment" style="width:100%; position:absolute; margin-left:-95%" src="images/akka-io3.svg" alt="Akka IO">
+                        <img class="fragment" style="width:100%; position:absolute; margin-left:-95%" src="images/akka-io4.svg" alt="Akka IO">
+                        <aside class="notes"><pre>
+                            - handles the ugly NIO api-work
+                            - makes it easier to understand
+
+                            - whenever we want something to happen, we use commands (also messages):
+                                - Tcp.Bind - attempt to bind
+                                - Tcp.Connect - attempt to connect
+                                - Tcp.Write(data, ack/NoAck) - write some data
+                                - Tcp.Close
+                            - what happens on the network is made available as events (which are messages):
+                                - Tcp.Bound - (listening)
+                                - Tcp.Connected  - (connection established)
+                                - Tcp.Received(data) - bytes received
+                                - Tcp.Closed - connection has been closed
+                                - Tcp.CommandFailed(command) - a command has failed
+                            </pre>
+                        </aside>
+                    </section>
+                </section>
+
+                <section>
+                <section>
+                    <h2>spray-can</h2>
+                    <ul>
+                        <li>provides message-based APIs on multiple levels<br/>
+                            (server-side: connection-level,<br/>
+                            client-side: connection-, host- and request-level)</li>
+                        </li>
+                        <li>maximum throughput with acceptable latency</li>
+                        <li>massive numbers of concurrent connections</li>
+                        <li>HTTP pipelining</li>
+                        <li>chunked messages (streaming)</li>
+                        <li>SSL/TLS encryption</li>
+                    </ul>
+                    <aside class="notes">
+                        - Re-using connections on host and request-level
+                        - allows you to control individual connections if required
+                        - &gt; 50K on single machine, no reason why &gt; 100K shouldn't be possible
+                        - timeouts: request and connection idle timeout
+                    </aside>
+                </section>
+
+                <section>
+                    <h2>Low-level HTTP layer</h2>
+                    <ul class="fragment">
+                        <li>directly sits on top of the new Akka IO</li>
+                        <li>performs TCP &lt;&mdash;&gt; HTTP "translation"</li>
+                        <li>cleanly separated layer of actors<br/>
+                            provided as an Akka Extension</li>
+                        <li>implements "essentials",<br/>
+                            no higher-level features (like file serving)</li>
+                    </ul>
+                    <aside class="notes">
+                        <pre>
+                            - Akka and Spray designed it together, based on the older spray-io
+                            - timeouts, both for receiving and handling requests
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <h2>spray-can: show me code</h2>
+                    <p>Bootstrapping</p>
+				  <pre style="width: 90%"><code class="scala" data-trim>
+object Bootstrap extends App {
+  val system = ActorSystem("example")
+  val pingPongService = system.actorOf(Props(new PingPongService))
+
+  // Tell the IO extension to bind to port 8080 on all interfaces:
+  IO(Http) ! Http.Bind(pingPongService, "0.0.0.0", 8080)
+}
+                  </code></pre>
+                </section>
+
+                <section>
+                    <h2>spray-can: show me code 2</h2>
+                    <p>Simple service implementation</p>
+				  <pre style="width: 90%"><code class="scala" data-trim>
+class PingPongService extends Actor {
+  def receive = {
+    // when a new connection comes in we register
+    // ourselves as the connection handler
+    case _: Http.Connected ⇒ sender ! Http.Register(self)
+
+    // can you guess what this does?
+    case HttpRequest(GET, Uri.Path("/"), _, _, _) ⇒
+      sender ! HttpResponse(entity = "PONG")
+  }
+}
+                  </code></pre>
+                    <aside class="notes">
+                        Easy-to-understand message protocol
+                    </aside>
+                </section>
+                </section>
+
+                <section>
+                    <h2>Part 2</h2>
+                    <h4>Topics</h4>
+                    <p>Routing</p>
+                </section>
+
+                <section>
+                    <h2>spray-routing</h2>
+                    <ul class="fragment">
+                        <li>internal DSL for the direct interface layer to the application</li>
+                        <li>type-safe, yet flexible (thanks to <a href="https://github.com/milessabin/shapeless">shapeless</a>)</li>
+                        <li>much more than just routing: behavior definition</li>
+                        <li>small and simple building blocks: directives</li>
+                        <li>highly composable</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2>REST Layer: How it fits in</h2>
+                    <img class="fragment" style="width:80%; background-color: #002b36" src="images/api0.svg" alt="application">
+                    <img class="fragment" style="position: absolute; width:80%; margin-left: -80%" src="images/api1.svg" alt="REST layer">
+                    <img class="fragment" style="position: absolute; width:80%; margin-left: -80%" src="images/api2.svg" alt="REST layer">
+                    <img class="fragment" style="position: absolute; width:80%; margin-left: -80%" src="images/api3.svg" alt="REST layer">
+                    <img class="fragment" style="position: absolute; width:80%; margin-left: -80%" src="images/api4.svg" alt="REST layer">
+                    <img class="fragment" style="position: absolute; width:80%; margin-left: -80%" src="images/api5.svg" alt="REST layer">
+                    <img class="fragment" style="position: absolute; width:80%; margin-left: -80%" src="images/api6.svg" alt="REST layer">
+                </section>
+
+                <section>
+                    <h2>REST Layer Responsibilities</h2>
+                    <ul>
+                        <li>request routing based on method, path, query, entity</li>
+                        <li>(Un)marshalling to / from domain objects</li>
+                        <li>encoding / decoding (compression)</li>
+                        <li>authentication / authorization</li>
+                        <li>caching and serving static content</li>
+                        <li>RESTful error handling</li>
+                    </ul>
+                </section>
+
+                <!--
+                <section>
+                    <section data-transition="none">
+                        <h2>Example architecture</h2>
+                        <img style="width:80%" src="images/example-arch.svg" alt="example architecture">
+                    </section>
+
+                    <section data-transition="none">
+                        <h2>Example architecture 2</h2>
+                        <img style="width:80%" src="images/example-arch-2.svg" alt="example architecture">
+                    </section>
+                </section>
+                -->
+
+                <section>
+                <section>
+                    <h2>Routing example code</h2>
+					<pre style="width: 70%"><code class="scala" data-trim>
+class MyServiceActor extends HttpServiceActor {
+  def receive = runRoute {
+    path("order" / HexIntNumber) { id =>
+      get {
+        complete {
+          "Received GET request for order " + id
+        }
+      } ~
+      put {
+        complete {
+          "Received PUT request for order " + id
+        }
+      }
+    }
+  }
+}
+                    </code></pre>
+                    <p>See the tree-like structure?</p>
+                </section>
+                <section>
+                    <h2>Routing example results</h2>
+					<pre style="width: 70%"><code data-trim>
+$ curl ../order/invalid
+The requested resource could not be found.
+
+$ curl ../order/cafe
+Received GET request for order 51966
+
+$ curl ../order/cafe -XPOST
+HTTP method not allowed, supported methods: GET, PUT
+                    </code></pre>
+                </section>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Real-World Example</h2>
+                        <pre style="font-size: 40%"><code class="scala" data-trim>
+def mainRoute = readableLogRequestResponse(lc) {
+  pathPrefix("app") {
+    serveDirectory(appPath)
+  } ~
+  pathPrefix("api" / "v0") {
+    timedRoute(apiTimer) {
+      requireLoggedInOrAnonymous(apiAuth, userResolver, userCookieName, anonymousUser.username, secureCookies) {
+        currentUser =>
+          requireReachableQuorum() {
+            pathPrefix("users") {
+              path("current") {
+                get {
+                  complete(currentUser)
+                }
+              } ~
+              requireAnonymous(currentUser) {
+                path("register") {
+                  post {
+                    anyParams('username, 'password) {
+                      (username, password) =>
+                        complete(registerUser(username, password))
+                    }
+                  }
+                }
+              } ~
+              requireRegistered(currentUser) {
+                path("user" / Segment) { username =>
+                  get {
+                    (requirePermission("users.user.attributes.view", currentUser) | validate(currentUser.username == username, "can only view details about self")) {
+                      complete(lookupUser(username))
+                    } ~
+                    complete(lookupUser(username).innerMapOption(_.withoutAttributes))
+                  } ~
+                  put {
+                    entity(as[User]) { updatedUser =>
+                      validate(updatedUser.username == username, "changing the username is not supported") {
+                        requirePermission("users.user.attributes.edit", currentUser) {
+                          complete(updateUser(updatedUser))
+                        }
+                      }
+                    }
+                  }
+                } ~
+                path("user" / Segment / "password") { username =>
+                  put {
+                    (requirePermission("users.user.password.edit", currentUser) | validate(currentUser.username == username, "can only edit password for self")) {
+                      anyParams('password) { password =>
+                        complete(updateUserPassword(username, password))
+                      }
+                    }
+                  }
+                } ~
+                path("_search") {
+                  parameter('query) { query =>
+                    complete(findUsers(query))
+                  }
+                }
+              }
+            } ~
+            requirePermission("messages", currentUser) {
+              pathPrefix("messages") {
+                path("send" / Segment) { destination =>
+                  anyParam('contents) {
+                    contents =>
+                      complete(sendMessage(currentUser.username, destination, contents))
+                  }
+                } ~
+                path("message" / Segment) { id =>
+                  complete(getMessage(currentUser.username, id))
+                } ~
+                path("latest") {
+                  parameters('since.as[DateTime] ?) {
+                    since =>
+                      complete(getMessages(currentUser.username, since getOrElse DateTime.now(DateTimeZone.UTC).minusDays(1)))
+                  }
+                } ~
+                pathPrefix("receive") {
+                  path("poll") {
+                    parameters('keepAlive.as[Int] ? 10, 'since.as[DateTime] ?) {
+                      (keepAlive, since: Option[DateTime]) =>
+                        ctx => pollMessages(ctx, currentUser.username, keepAlive, since orElse Some(DateTime.now(DateTimeZone.UTC)))
+                    }
+                  }
+                }
+              }
+            }
+          }
+      } ~
+      path("logout") {
+        logout(anonymousUser.username, userCookieName, secureCookies)
+      }
+    }
+  }
+}
+                        </code></pre>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>What's in a Route?</h2>
+					<pre><code class="scala">type Route = RequestContext ⇒ Unit</code></pre>
+                    <p>Uses explicit continuation-passing style, nestable.</p>
+                    <p>May complete, reject or ignore the requests.</p>
+                    <p>Usually composed by Directives
+                    <pre><code class="scala" data-trim>
+case class RequestContext(
+  request: HttpRequest,
+  retriesLeft: Int, redirectsLeft: Int,
+  commander: ActorRef)</code></pre>
+                </section>
+
+                <section>
+                <section>
+                    <h2>What's in a Directive?</h2>
+                    <p>“Directives” are small building blocks of which you can construct arbitrarily complex route structures.</p>
+                    <p>Does one or more of the following</p>
+                    <ul>
+                        <li>Transformation</li>
+                        <li>Filtering</li>
+                        <li>Extraction</li>
+                        <li>Completion</li>
+                    </ul>
+                    <p>&nbsp;</p>
+                    <p><small>See <a href="http://spray.io/documentation/1.2.1/spray-routing/key-concepts/directives/">Key Concepts: Directives</a></small></p>
+                    <aside class="notes">
+                        <pre>
+                            - Transform the incoming RequestContext before passing it on to its inner Route
+                            - Filter the RequestContext according to some logic, i.e. only pass on certain requests and reject all others
+                            - Extract values from the RequestContext and make them available to its inner Route as “extractions”
+                            - Complete the request
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <h2>What's in a Directive? (2)</h2>
+                    <p>Directives are type-safe</p>
+                    <p>Combines using ``|`` or ``&``, uses <code class="scala">shapeless.HList</code></p>
+                    <pre><code class="scala" data-trim style="font-size: 87%">
+// cannot OR hlists of different type signatures:
+val route = path("order" / IntNumber) | get // doesn't compile
+
+val route = path("order" / IntNumber) | path("order" / DoubleNumber) // doesn't compile
+val route = path("order" / IntNumber) | parameter("order".as[Int])   // compiles
+                    </code></pre>
+                </section>
+
+
+                <section>
+                    <h2>Understanding extractions</h2>
+                    <p>What will be printed, and when?:</p>
+                        <pre><code data-trim class="scala">
+val route: Route = {
+  println("MARK 1")
+  get {
+    println("MARK 2")
+    path("abc" / Segment) { x =>
+      println("MARK 3")   //
+      complete {          // code "inside"
+        println("MARK 4") // of the
+        "yeah"            // extraction
+      }                   //
+    }
+  }
+}
+                        </code></pre>
+                    <p>Tip: try not to create too dynamic routes</p>
+                    <p><code>dynamicIf(settings.devMode)</code>-directive for reloading</p>
+                    <aside class="notes">
+                            <pre>
+                                - Common mistake in new spray users are putting custom logic inside non-dynamic routes
+                            </pre>
+                    </aside>
+                </section>
+
+                </section>
+
+                <section>
+                <section>
+                    <h2>Rejections</h2>
+                    <p>The <code>~</code> operator recovers from rejections by trying another route. All rejections are stored.</p>
+                    <p>Rejections are handled by a <code>RejectionHandler</code></p>
+                    <p><pre><code class="scala">type RejectionHandler.PF = PartialFunction[List[Rejection], Route]</code></pre></p>
+                </section>
+
+                <section>
+                    <h2>Default Rejection handling</h2>
+                    <p>Default <code>RejectionHandler</code> bases responses on first rejection.</p>
+                    <pre><code class="scala" data-trim>
+case MalformedQueryParamRejection(name, msg, _) :: _ ⇒
+  complete(BadRequest, s"The query parameter '$name' was malformed:\n$msg")
+
+case MalformedRequestContentRejection(msg, _) :: _ ⇒
+  complete(BadRequest, "The request content was malformed:\n" + msg)
+
+case rejections @ (MethodRejection(_) :: _) ⇒
+  val methods = rejections
+    .collect { case MethodRejection(method) ⇒ method }
+  complete(MethodNotAllowed, List(Allow(methods: _*)),
+    "HTTP method not allowed, supported methods: " + methods.mkString(", "))
+
+case MissingCookieRejection(cookieName) :: _ ⇒
+  complete(BadRequest, s"Request is missing required cookie '$cookieName'")
+                    </code></pre>
+                </section>
+                </section>
+
+                <section>
+                    <h2>Predefined Directives (RC3)</h2>
+                    <p style="font-size: 60%">alwaysCache, anyParam, anyParams, authenticate, authorize, autoChunk, cache, cachingProhibited, cancelAllRejections, cancelRejection, clientIP, complete, compressResponse, compressResponseIfRequested, cookie, decodeRequest, decompressRequest, delete, deleteCookie, detach, dynamic, dynamicIf, encodeResponse, entity, extract, failWith, formField, formFields, get, getFromBrowseableDirectories, getFromBrowseableDirectory, getFromDirectory, getFromFile, getFromResource, getFromResourceDirectory, handleExceptions, handleRejections, handleWith, head, headerValue, headerValueByName, headerValuePF, hextract, host, hostName, hprovide, jsonpWithParameter, listDirectoryContents, logRequest, logRequestResponse, logResponse, mapHttpResponse, mapHttpResponseEntity, mapHttpResponseHeaders, mapHttpResponsePart, mapInnerRoute, mapRejections, mapRequest, mapRequestContext, mapRouteResponse, mapRouteResponsePF, method, noop, onComplete, onFailure, onSuccess, optionalCookie, optionalHeaderValue, optionalHeaderValueByName, optionalHeaderValuePF, options, overrideMethodWithParameter, parameter, parameterMap, parameterMultiMap, parameters, parameterSeq, pass, patch, path, pathPrefix, pathPrefixTest, pathSuffix, pathSuffixTest, post, produce, provide, put, rawPath, rawPathPrefix, rawPathPrefixTest, redirect, reject, rejectEmptyResponse, requestEncodedWith, requestEntityEmpty, requestEntityPresent, respondWithHeader, respondWithHeaders, respondWithLastModifiedHeader, respondWithMediaType, respondWithSingletonHeader, respondWithSingletonHeaders, respondWithStatus, responseEncodingAccepted, rewriteUnmatchedPath, routeRouteResponse, scheme, schemeName, setCookie, unmatchedPath, validate</p>
+                </section>
+
+                <section>
+
+                    <section>
+                        <h2>Creating a custom directive</h2>
+                        <p>Providing a new value</p>
+					<pre><code class="scala" data-trim style="font-size:90%; max-height: 600px;">
+trait MyRouting extends DateDirectives {
+  def myRoute: Route = get {
+    weekendsOnly() { dow =>
+        complete("ok")
+    }
+  }
+}
+
+trait DateDirectives extends Directives {
+  def weekendsOnly(): Directive1[Int] = weekendsOnly(DateTime.now(DateTimeZone.UTC))
+
+  def weekendsOnly(now: DateTime): Directive1[Int] = {
+    val dow = now.dayOfWeek().get()
+    if(dow == DateTimeConstants.SATURDAY || dow == DateTimeConstants.SATURDAY)
+      provide(dow)
+    else reject
+  }
+}
+                    </code></pre>
+                        <p><code>Directive0</code><br/><code class="scala">Directive1[T]</code><br/><code class="scala">Directive[L &lt;: HList]</code></p>
+                    </section>
+
+                <section>
+                    <h2>Creating a custom directive 2</h2>
+                    <p>Transforming an existing directive</p>
+					<pre><code class="scala" data-trim>
+def browserVersion: Directive1[Seq[ProductVersion]] = {
+  optionalHeaderValueByType[HttpHeaders.`User-Agent`]() flatMap {
+    case Some(HttpHeaders.`User-Agent`(pvs))
+                        if pvs.exists(_.product.contains("Mozilla")) =>
+      provide(pvs)
+    case _ =>
+      reject
+  }
+}
+
+val route = browserVersion { version =>
+  // e.g: List(Mozilla/5.0 (Macintosh; Intel Mac OS X 10_9_2), Chrome/34.0.1847.131)
+  complete(s"Hello, $version")
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Creating a custom directive 3</h2>
+                    <p>Using a magnet</p>
+					<pre><code class="scala" data-trim style="max-height: 600px">
+trait PermissionDirectives extends Directives {
+  def requirePermission(pm: PermissionMagnet) = pm.requirePermission
+}
+
+trait PermissionMagnet {
+  def requirePermission: Directive0
+}
+
+object PermissionMagnet extends Directives {
+  implicit def fromPermissionAndUser(pu: (String, User)): PermissionMagnet =
+    new PermissionMagnet {
+      override def requirePermission: Directive0 =
+        if (pu._2.hasPermission(pu._1))
+          pass
+        else
+          reject(AuthorizationFailedRejection)
+  }
+}
+
+val route = requirePermission("user.edit", currentUser) { complete("ok") }
+                    </code></pre>
+                </section>
+
+                </section>
+
+                <section>
+                    <h2>spray-client</h2>
+                    <p>Pipeline for <a href="http://spray.io/documentation/1.2.1/spray-httpx/request-building/">Request building</a> and <a href="http://spray.io/documentation/1.2.1/spray-httpx/response-transformation/">Response transformation</p>
+                    <pre><code class="scala" style="font-size: 70%" data-trim>
+def pipeline: HttpRequest => Future[JsObject] = {
+  encode(Gzip) ~>
+  addHeader(HttpHeaders.Accept(MediaTypes.`application/json`)) ~>
+  logRequest(log, Logging.InfoLevel) ~>
+  sendReceive ~>
+  decode(Gzip) ~>
+  logResponse(log, Logging.InfoLevel) ~>
+  // if the server gives us weird content types, use our own:
+  enforceResponseContentType(ContentTypes.`application/json`) ~>
+  unmarshal[JsObject]
+}
+                    </code></pre>
+                    <p><a href="https://groups.google.com/forum/#!topic/spray-user/N6RGjXLGC-Q/discussion">Improvements</a> on the <a href="https://github.com/spray/spray/issues/144">drawing board</a></p>
+                </section>
+
+
+                <section>
+                    <h2>Part 3</h2>
+                    <h4>Topics</h4>
+                    <p>Best practices</p>
+                    <p>Advanced topics</p>
+                </section>
+
+                <section>
+                    <h2>Best Practices</h2>
+                    <ul>
+                        <li>Don't block in your routes!</li>
+                        <li>Keep route structure clean and readable, <br/>
+                            pull out all logic into custom directives</li>
+                        <li>Don’t let REST layer leak into application</li>
+                        <li>Use (Un)marshalling infrastructure</li>
+                        <li>Use <a href="https://github.com/spray/sbt-revolver‎">sbt-revolver</a> etc. for fast dev turn-around</li>
+                    </ul>
+                    <aside class="notes">
+                        <pre>
+                            - blocking would waste the dispatching thread, leading to scaling issues
+                            - JRebel used to be free for scala, but they silently pulled it, worked for around 90% of changes
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Keping route structure clean</h2>
+                        <p>Avoid functions operating on routes. Dont:</p>
+                        <pre><code data-trim class="scala">
+def ensureUserCookieRoute(inner: Route): Route = {
+  parameter("ignoreExistingCookies") { _ =>
+    setCookie(HttpCookie("user", "username")) {
+      inner
+    }
+  } ~
+  cookie("user") { cookie =>
+    validate(cookie.content == "username", "invalid cookie") {
+      inner
+    }
+  } ~
+  setCookie(HttpCookie("user", "username")) {
+    inner
+  }
+}
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Keeping route structure clean 2</h2>
+                        <p>Write directives!</p>
+                        <pre><code data-trim class="scala">
+def ensureUserCookie(user: String): Directive0 = {
+  val userCookie = HttpCookie("user", user)
+
+  parameter("ignoreCookies"?) flatMap {
+    case Some(_) => setCookie(userCookie)
+    case None => optionalCookie("user") flatMap {
+      case Some(c: HttpCookie) if c.content == user => pass
+      case None => setCookie(userCookie)
+    }
+  }
+}
+
+def myRoute: Route = ensureUserCookie("username") { inner }
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Route ordering performance</h2>
+                        <p>Dynamic route parts have to be rebuilt per request:</p>
+                        <pre><code data-trim class="scala">
+val routeA =
+  path("abc" / Segment) { x =>
+    get {
+      complete(responseFor(x))
+    }
+  }
+
+val routeB =
+  get {
+    path("abc" / Segment) { x =>
+      complete(responseFor(x))
+    }
+  }
+                        </code></pre>
+                        <p>Keep request-specific as short as possible.</p>
+                        <aside class="notes">
+                            <pre>
+                                - But do not optimize at the cost of readability
+                            </pre>
+                        </aside>
+                    </section>
+
+                    <section>
+                        <h2>Route ordering performance 2</h2>
+                        <p>If OR-ing routes, put quick routes first, even if the difference may be initially non-obvious</p>
+                        <pre><code data-trim class="scala">
+// avoid:
+def requireLoggedIn(authMagnet: AuthMagnet[String]) = {
+  (authenticate(authMagnet) | verifyUserCookie) flatMap { username =>
+    // ...
+  }
+}
+
+// consider:
+def requireLoggedIn(authMagnet: AuthMagnet[String]) = {
+  (verifyUserCookie | authenticate(authMagnet)) flatMap { username =>
+    // ...
+  }
+}
+                        </code></pre>
+                        <p>AuthMagnet[T], as well as any other Directive may be asynchronous.</p>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Tweaking configuration</h2>
+                    <ul>
+                        <li><a href="https://github.com/spray/spray/blob/master/spray-io/src/main/resources/reference.conf">spray-io</a> - buffer & max message sizes - timeouts</li>
+                        <li><a href="https://github.com/spray/spray/blob/master/spray-can/src/main/resources/reference.conf">spray-can</a> - timeouts - pipelining - meta-headers - parsing</li>
+                        <li><a href="https://github.com/spray/spray/blob/master/spray-routing/src/main/resources/reference.conf">spray-routing</a> - error messages - cache headers</li>
+                    </ul>
+                    <p>&nbsp;</p>
+                    <div class="fragment">
+                        <p>Pay special attention to the uri parsing mode:</p>
+                        <pre><code>uri-parsing-mode = strict | relaxed | relaxed-with-raw-query</code></pre>
+                        <p>You might need <code>raw-request-uri-header</code></p>
+                    </div>
+                    <aside class="notes">
+                        <pre>
+                            - request parsing (sizes + modes etc)
+                            - Raw-Request-Uri(uri: String), Remote-Address(remote: RemoteAddress)
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <section>
+                        <h2>Structuring routing</h2>
+                        <ul>
+                            <li>Compose routes.</li>
+                            <li>Keep route parts in traits</li>
+                            <li>Route trait only depend on some kind of functionality</li>
+                            <li>Functionality may have different implementations</li>
+                            <li>Extend required traits in service actor implementation</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h2>Structuring routing 2</h2>
+                        <img src="images/81752311.png"/>
+                    </section>
+
+                    <section>
+                        <h2>Structuring routing 3</h2>
+                        <p>Define functionality trait</p>
+                        <pre><code data-trim class="scala">
+trait UserRoutingFunctionality {
+  def registerUser(username: String, password: String): Future[User]
+  def lookupUser(username: String): Future[Option[User]]
+  def updateUser(updatedUser: User): Future[User]
+  def findUsers(query: String): Future[Usernames]
+
+  def updateUserPassword(username: String, password: String): Future[Option[User]] = {
+    lookupUser(username).innerFlatMapOption(storedUser =>
+      updateUser(storedUser.withPassword(password))
+        .map(Option.apply))
+  }
+}
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Structuring routing 4</h2>
+                        <p>Define routing given functionality</p>
+                        <pre><code data-trim class="scala">
+trait UserRouting extends ...
+                            with UserRoutingFunctionality {
+
+  def userRoute(currentUser: User)(implicit t: Timeout, ec: ExecutionContext): Route = {
+    requireRegistered(currentUser) {
+      path("user" / Segment) { username =>
+        get {
+          complete(lookupUser(username).innerMapOption(_.withoutAttributes))
+        }
+      } ~
+      path("user" / Segment / "password") { username =>
+        put {
+          (requirePermission("users.user.password.edit", currentUser) | validate(currentUser.username == username, "can only edit password for self")) {
+            anyParams('password) { password =>
+              complete(updateUserPassword(username, password))
+            }
+          }
+        }
+      } ~
+      path("_search") {
+        parameter('query) { query =>
+          complete(findUsers(query))
+        }
+      }
+    }
+  }
+  // format: ON
+}
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Structuring routing 5</h2>
+                        <p>Define functionality given a specific set of services</p>
+                        <pre><code data-trim class="scala">
+trait ActorUserRoutingFunctionality extends UserRoutingFunctionality {
+  def userService: ActorRef
+
+  override def registerUser(username: String, password: String)(implicit t: Timeout, ec: ExecutionContext): Future[User] = {
+    val user = User(username).withPassword(password)
+
+    AddUser(user).request(userService)
+  }
+
+  override def lookupUser(username: String)(implicit t: Timeout, ec: ExecutionContext): Future[Option[User]] = {
+    GetUser(username).request(userService).recoverAsFutureOptional
+  }
+
+  override def updateUser(updatedUser: User)(implicit t: Timeout, ec: ExecutionContext): Future[User] = {
+    UpdateUser(updatedUser).request(userService)
+  }
+
+  override def findUsers(query: String)(implicit t: Timeout, ec: ExecutionContext): Future[Usernames] = {
+    FindUsers(query).request(userService).map(_.toUsernames)
+  }
+}
+                        </code></pre>
+                    </section>
+
+                    <section>
+                        <h2>Structuring routing 6</h2>
+                        <p>Tie it all together in the service actor</p>
+                        <pre><code data-trim class="scala">
+class HttpService(_userService: ActorRef)
+    extends HttpServiceActor
+    with HttpServiceRouting
+    with UserRouting
+    with ActorUserRoutingFunctionality {
+
+  override def userService = _userService
+
+  val currentUser = User("anonymous")
+
+  override def receive: Receive = runRoute(userRoute(currentUser))
+}
+                        </code></pre>
+                        <p>Create intermediate traits if required for clarity or brevity.</p>
+                    </section>
+
+                </section>
+
+
+
+                    <section>
+                        <h2># of service actors</h2>
+                        <p>Consider the number of HttpService actors.</p>
+                        <pre><code data-trim>
+val httpService = system.actorOf(SmallestMailboxPool(4)
+  .props(Props(new HttpService(...))), "http-service")
+                        </code></pre>
+                        <p>Can always be overridden by the configuration.</p>
+                    </section>
+
+                <!--
+                    <section>
+                        <h2>More tips - code formatting</h2>
+                        <p>Using <a href="http://mdr.github.io/scalariform/">scalariform</a> messes up route structure, so toggle formatting:</p>
+                        <pre><code data-trim>
+// format: OFF
+def myRoute: Route = {
+  path("foo") {
+    complete("this is foo")
+  } ~
+  path("bar") {
+    complete("this is bar")
+  }
+}
+// format: ON
+                        </code></pre>
+                    </section>
+                    -->
+
+                <section>
+                    <section>
+                        <h2>(De)Serialization</h2>
+                        <p>Deserializing a <code>HttpEntity</code> to a <code>T</code></p>
+                        <p>Serializing a <code>T</code> to a <code>HttpEntity</code></p>
+                        <aside class="notes">
+                            <pre>
+                            Well, to/from a HttpRequest/HttpResponse is also possible
+                            See ToResposneMarshaller and FromResponseUnmarshaller.</pre>
+                        </aside>
+                    </section>
+
+                <section>
+                <h2>Deserializing custom classes</h2>
+                <pre><code class="scala" style="font-size: smaller; max-height: 600px" data-trim>
+import spray.httpx.SprayJsonSupport
+import spray.json._
+
+case class User(username: String, password: String)
+
+trait UserProtocol extends DefaultJsonProtocol {
+  implicit val userFormat: RootJsonFormat[User] = jsonFormat2(User)
+}
+
+class MyRouting extends Directives with UserProtocol with SprayJsonSupport {
+  def route: Route = entity(as[User]) { user =>
+    complete(user)
+  }
+}
+                </code></pre>
+                </section>
+
+                <section>
+                    <h2>Deserializing custom classes</h2>
+                    <p>Behind the scenes</p>
+                    <pre><code class="scala" style="font-size: 75%; max-height: 600px" data-trim>
+// say we want the entity as an instance of User from the HttpRequest:
+entity(as[User]) // : Directive1[User]
+
+// we can get it if we have an FromRequestUnmarshaller[User]
+def entity[T](um: FromRequestUnmarshaller[T]): Directive1[T] = provide(_.request.as(um))
+// which is hopefully possible to get from an implicit resolution
+def as[T](implicit um: FromRequestUnmarshaller[T]) = um
+
+// if we have an Unmarshaller[User], we can deserialize it from the request entity
+implicit def fromMessageUnmarshaller[T](implicit um: Unmarshaller[T]): FromMessageUnmarshaller[T] =
+                        um(msg.entity)
+
+// if we have a json reader for the User type, we have a unmarshaller for that type:
+implicit def sprayJsonUnmarshaller[T: RootJsonReader]: Unmarshaller[T] = jsonReader[T].read(json)
+
+// the json reader is provided by a `case class` utility from spray-json:
+implicit val userJsonReader: RootJsonReader = jsonFormat2(User)
+                    </code></pre>
+                </section>
+
+                <section>
+                <h2>Custom deserializing</h2>
+                <p>What if we wanted to use <a href="http://wiki.fasterxml.com/JacksonHome">jackson</a>?</p>
+                    <pre><code class="scala" style="font-size: smaller; max-height: 600px" data-trim>
+trait JacksonUnmarshalling {
+  implicit object ObjectNodeDeserializer extends FromRequestUnmarshaller[ObjectNode] {
+    override def apply(request: HttpRequest): Either[DeserializationError, ObjectNode] = {
+      mapper.readObjectNode(request.entity.data.toByteArray) match {
+        case None      => Left(MalformedContent("Unable to read json data."))
+        case Some(obj) => Right(obj)
+      }
+    }
+  }
+}
+
+class MyRouting extends Directives with JacksonUnmarshalling {
+  def route: Route = entity(as[ObjectNode]) { user =>
+    complete("ok")
+  }
+}
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Custom serializing</h2>
+                    <pre><code class="scala" style="font-size: smaller; max-height: 600px" data-trim>
+trait JacksonMarshalling {
+  implicit def jsonNodeMarshaller(implicit mapper: ObjectMapper): Marshaller[JsonNode] =
+    Marshaller.of[JsonNode](ContentTypes.`application/json`) { (value, ct, ctx) =>
+      if (value.isObject && !value.has("ok")) value.asInstanceOf[ObjectNode].put("ok", true)
+      ctx.marshalTo(HttpEntity(ct, mapper.writeValueAsBytes(value)))
+    }
+}
+
+class MyRouting extends Directives with JacksonMarshalling {
+  implicit val mapper = new ObjectMapper()
+  def route: Route = get {
+    complete(mapper.createObjectNode().put("hello", "world"))
+  }
+}
+                    </code></pre>
+                </section>
+
+                    <section>
+                        <ul>
+                            <li>See <a href="http://spray.io/documentation/1.2.1/spray-httpx/marshalling/">official documentation</a></li>
+                            <li>What about marshalling to multiple types?
+                                <ul>
+                                    <li>Content negotiation</li>
+                                    <li>HTTP <code>Accept:</code> headers</li>
+                                    <li>Delegating to marshallers (Marshaller[T])</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>Custom rejections</h2>
+                    <pre><code class="scala" style="font-size: smaller; max-height: 600px" data-trim>
+case class MyCustomRejection(reason: String) extends Rejection
+
+object MyRejectionHandler extends Directives {
+  def handler: RejectionHandler = {
+    case MyCustomRejection(reason) :: _ =>
+      complete(BadGateway, s"Rejecting your request: $reason")
+  }
+}
+
+trait RejectionRouting extends Directives {
+  def route: Route = get {
+    handleRejections(MyRejectionHandler.handler) {
+      get {
+        reject(MyCustomRejection("just because"))
+      }
+    }
+  }
+}
+                    </code></pre>
+                    <p>May also use implicit parameters to <code>runRoute</code></p>
+                    <aside class="notes"><pre>- wrapping routes as a json api done in example app. string rejections -> json messages</pre></aside>
+                </section>
+
+                <section>
+                <section>
+                    <h2>Debugging missing implicits</h2>
+                    <p>Common pitfall:</p>
+                    <pre><code class="scala" style="font-size: 70%" data-trim>
+trait SerializationRoute extends Directives {
+  def userFuture = Future.successful(User("foo"))
+
+  def route: Route = get {
+    get {
+      complete(userFuture)
+    }
+  }
+}
+=> Does not compile:
+Error:(19, 16) could not find implicit value for parameter marshaller:
+        spray.httpx.marshalling.ToResponseMarshaller[scala.concurrent.Future[org.nkvoll.javabin.models.User]]
+            complete(userFuture)
+                    ^
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Debugging missing implicits 2</h2>
+                    <p>Add implicitly[..] for stuff that _should_ work:</p>
+                    <pre><code class="scala" style="font-size: 80%" data-trim>
+trait SerializationRoute extends Directives {
+  def userFuture = Future.successful(User("foo"))
+
+  def route: Route = get {
+    get {
+      implicitly[ToResponseMarshaller[org.nkvoll.javabin.models.User]]
+      implicitly[ToResponseMarshaller[Future[String]]]
+      complete(userFuture)
+    }
+  }
+}
+=> Does not compile:
+Error:(23, 17) could not find implicit value for parameter e:
+                        spray.httpx.marshalling.ToResponseMarshaller[org.nkvoll.javabin.models.User]
+    implicitly[ToResponseMarshaller[org.nkvoll.javabin.models.User]]
+              ^
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Debugging missing implicits 3</h2>
+                    <p>Magically realize some of what is missing</p>
+                    <pre><code class="scala" style="font-size: 75%" data-trim>
+trait SerializationRoute extends Directives with SprayJsonSupport {
+  def userFuture = Future.successful(User("foo"))
+
+  def route: Route = get {
+    get {
+      implicitly[ToResponseMarshaller[org.nkvoll.javabin.models.User]]
+      implicitly[ToResponseMarshaller[Future[String]]]
+      complete(userFuture)
+    }
+  }
+}
+=> Does not compile:
+Error:(24, 17) could not find implicit value for parameter e:
+                        spray.httpx.marshalling.ToResponseMarshaller[scala.concurrent.Future[String]]
+      implicitly[ToResponseMarshaller[Future[String]]]
+                ^
+                    </code></pre>
+                </section>
+
+                <section>
+                    <h2>Debugging missing implicits 4</h2>
+                    <p>.. then the remaining part(s) should be obvious</p>
+                    <pre><code class="scala" data-trim>
+trait SerializationRoute extends Directives with SprayJsonSupport {
+  def userFuture = Future.successful(User("foo"))
+
+  def route(implicit ec: ExecutionContext): Route = get {
+    get {
+      complete(userFuture)
+    }
+  }
+}
+                    </code></pre>
+                </section>
+                </section>
+
+                <section data-markdown>
+                    <script type="text/template">
+                        ## Good REST practices
+                        - API tests / specs
+                        - Versioning. ([Semantic versioning](http://semver.org/) for public APIs)
+                        - Make it discoverable and document it:
+                          - Links in responses
+                          - [Swagger](https://github.com/wordnik/swagger-core) is [reasonable](https://github.com/wordnik/swagger-core/wiki/Adding-Swagger-to-your-API)
+                          - (consider [spray-swagger](https://github.com/gettyimages/spray-swagger) and likes)
+                    </script>
+                </section>
+
+                <section>
+                    <h2>Some production considerations</h2>
+                    <p>Running as a service: <a href="http://commons.apache.org/proper/commons-daemon/">commons-daemon</a> + <a href="http://commons.apache.org/proper/commons-daemon/jsvc.html">jsvc</a></p>
+                    <p>Deployment configuration</p>
+                    <p>Code reloading and redeploying</p>
+                    <p>Metrics - <a href="http://metrics.codahale.com/">codahale</a>, <a href="https://github.com/etsy/statsd/">StatsD</a>, <a href="https://github.com/Ticketfly/pillage">pillage</a>, <a href="https://github.com/spray/spray/pull/359">spray-metrics(in progress)</a>...</p>
+                    <p>Monitoring - <del>Typesafe Console / atmos</del>, <a href="http://www.takipi.com/">Takipi</a>, <a href="http://newrelic.com/">NewRelic</a>, <a href="https://www.pingdom.com/">Pingdom</a>, ...</p>
+                    <p><a href="http://www.oracle.com/technetwork/java/javaseproducts/mission-control/java-mission-control-1998576.html">Java Mission Control</a>?</p>
+                    <p>&nbsp;</p>
+                    <p>Optimize using multiple dispatchers if work-load is sufficiently different</p>
+                    <p>Dont optimize blindly</p>
+                    <aside class="notes"><pre>
+                        - Keeping state + reload is hard, easier to start from empty.
+                        - Use health checks, detailed and simple.
+                        - Typesafe console/atmos was used eariler to optimize, but has been EOL'ed
+                    </pre></aside>
+                </section>
+
+
+                <section>
+                    <section>
+                        <h2>There is more...</h2>
+                        <ul>
+                            <li><a href="http://spray.io/documentation/1.2.1/spray-servlet/">spray-servlet</a></li>
+                            <li>Request/response streaming</li>
+                            <li><a href="http://spray.io/documentation/1.2.1/spray-testkit/">Testing routes</a></li>
+                            <li>client-side APIs</li>
+                            <li>JSON support (<a href="https://github.com/spray/spray-json">spray-json</a>...)</li>
+                            <li>...</li>
+                        </ul>
+                    </section>
+                    <section>
+                        <h2>spray-caching</h2>
+                        <ul>
+                            <li>General solution, stores Future[T] based on a Key</li>
+                            <li>Has support from spray-routing</li>
+                        </ul>
+        <pre><code class="scala" data-trim>
+// if we have an "expensive" operation
+def expensiveOp(): Double = new util.Random().nextDouble()
+
+// and a Cache for its result type
+val cache: Cache[Double] = LruCache()
+
+// we can wrap the operation with caching support
+// (providing a caching key)
+def cachedOp[T](key: T): Future[Double] = cache(key) {
+  expensiveOp()
+}
+
+cachedOp("foo").await === cachedOp("foo").await
+        </code></pre>
+                        <p>See <a href="http://spray.io/documentation/1.2.1/spray-caching/">official documentation</a></p>
+                    </section>
+                </section>
+
+                <section>
+                    <h2>What's next?</h2>
+                    <ul>
+                        <li>spray 1.1, 1.2, 1.3 released Nov 2013</li>
+                        <li>as well: <a href="http://typesafe.com/blog/typesafe-gets-sprayed"><em>spray</em> becomes <em>akka-http</em></a></li>
+                        <li><a href="http://www.playframework.com">Play</a> will gradually move onto <em>akka-http</em></li>
+                        <li>Improvements, features, rounding off
+                            <ul>
+                                <li>websockets</li>
+                                <li>SPDY</li>
+                                <li>...</li>
+                            </ul>
+                        <li>Focus on <a href="http://www.reactive-streams.org/">Reactive Streams</a> (Typesafe, Oracle, Netflix, Twitter, RedHat, etc..)</li>
+                    </ul>
+                    <aside class="notes">
+                        <pre>
+                            - websockets promised, "it has to become part of spray since Play needs it" - mathias
+
+                            - websockets state:
+                                - SprayWebsockets - by the guy behind scala.js, no longer maintained, but still works
+                                - spray-websocket - by wandou labs, active, but also pretty new
+
+                            - How is spray going to change when becoming akka-http?
+                                - Won't be a rewrite, trying to be as stable as possible
+                                - No structural changes, API stays largely the same
+                                - Proper migration support promised
+                        </pre>
+                    </aside>
+                </section>
+
+                <section>
+                    <h2>Getting started</h2>
+                    <ul>
+                        <li>Main site &amp; documentation:<br/>
+                            <a href="http://spray.io">http://spray.io</a>
+                        </li>
+                        <li>Mailing lists:<br/>
+                            <a href="http://groups.google.com/group/spray-user"> http://groups.google.com/group/spray-user</a>
+                        </li>
+                        <li>Twitter: <br/>
+                            <a href="https://twitter.com/sprayio">@sprayio</a></li>
+                        <li>Learning resources:
+                            <ul>
+                                <li><a href="https://github.com/spray/spray/blob/master/site/src/main/scala/spray/site/Main.scala">spray.io source</a></li>
+                                <li>Spray <a href="https://github.com/spray/spray-template">project template</a> (select branch)</li>
+                                <li>Bunch of <a href="https://github.com/karthik20522/SprayLearning">tutorials with code</a></li>
+                            </ul>
+                        </li>
+                    </ul>
+                </section>
+
+				<section>
+					<h1>Q &amp; G</h1>
+                    <p><small>also: the end</small></p>
+				</section>
+
+			</div>
+
+		</div>
+
+		<script src="lib/js/head.min.js"></script>
+		<script src="js/reveal.min.js"></script>
+
+		<script>
+
+			// Full list of configuration options available here:
+			// https://github.com/hakimel/reveal.js#configuration
+			Reveal.initialize({
+				controls: true,
+				progress: true,
+				history: true,
+				center: true,
+                touch: true,
+
+				theme: Reveal.getQueryHash().theme || 'solarized', // available themes are in /css/theme
+				transition: Reveal.getQueryHash().transition || 'fade', // default/cube/page/concave/zoom/linear/fade/none
+                transitionSpeed: 'fast',
+
+				// Parallax scrolling
+				// parallaxBackgroundImage: 'https://s3.amazonaws.com/hakim-static/reveal-js/reveal-parallax-1.jpg',
+				// parallaxBackgroundSize: '2100px 900px',
+
+				// Optional libraries used to extend on reveal.js
+				dependencies: [
+					{ src: 'lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'plugin/highlight/highlight.js', async: true, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'plugin/zoom-js/zoom.js', async: true, condition: function() { return !!document.body.classList; } },
+					{ src: 'plugin/notes/notes.js', async: true, condition: function() { return !!document.body.classList; } }
+				]
+			});
+
+		</script>
+
+	</body>
+</html>

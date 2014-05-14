@@ -1,0 +1,12 @@
+{
+  "name": "requirejs-tpl-jfparadis",
+  "homepage": "https://github.com/jfparadis/requirejs-tpl",
+  "_release": "dffa4eb447",
+  "_resolution": {
+    "type": "commit",
+    "commit": "dffa4eb4479079e437afbb8d034a94fe28c07cf9"
+  },
+  "_source": "git://github.com/jfparadis/requirejs-tpl.git",
+  "_target": "dffa4eb4479079e437afbb8d034a94fe28c07cf9",
+  "_originalSource": "requirejs-tpl-jfparadis"
+}

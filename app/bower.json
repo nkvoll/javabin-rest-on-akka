@@ -1,0 +1,32 @@
+{
+  "name": "javabin-rest-on-akka-app",
+  "version": "1.0.0",
+  "ignore": [
+    ".jshintrc",
+    "**/*.txt"
+  ],
+  "dependencies": {
+    "bootstrap": "3.1.1",
+    "modernizr": "2.7.2",
+    "pace": "0.5.1",
+    "backbone": "1.1.2",
+    "marionette": "1.8.3",
+    "underscore": "1.6.0",
+    "underscore.string": "2.3.3",
+    "backbone.babysitter": "0.1.1",
+    "backbone.wreqr": "1.2.1",
+    "requirejs-tpl-jfparadis": "dffa4eb4479079e437afbb8d034a94fe28c07cf9",
+    "text": "2.0.12",
+    "html5shiv": "3.7.1",
+    "respond": "1.4.2",
+    "bootstrap-validator": "0.3.0",
+    "typeahead.js": "0.10.2",
+    "typeahead.js-bootstrap3.less": "0.2.3",
+    "momentjs": "2.6.0",
+    "codemirror": "4.1.0",
+    "markdown": "0.5.0",
+    "swagger-ui": "2.0.16",
+    "blueimp-md5": "1.1.0"
+  },
+  "private": true
+}

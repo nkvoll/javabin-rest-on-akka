@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="">
+        <meta name="author" content="">
+        <title>javabin-rest-on-akka</title>
+
+        <link rel="stylesheet" href="stylesheets/app.css">
+
+        <script type="text/javascript">
+            window._xsrf_token = document.cookie.replace(/(?:(?:^|.*;\s*)_xsrf\s*\=\s*([^;]*).*$)|^.*$/, "$1");
+        </script>
+
+        <script type="text/javascript">
+            var directory = "_build"
+            if(window.location.hostname.match(/localhost/)) {
+                directory = "javascripts"
+            }
+            document.write([
+                '<script type="text/javascript" language="javascript" ',
+                        'data-main="'+directory+'/main" ',
+                'src="javascripts/require.js"></scr', /* wtf chrome? */
+                'ipt>'
+            ].join(""));
+        </script>
+
+    </head>
+    <body role="document">
+
+        <!-- Fixed navbar -->
+        <div id="top-region" class="navbar navbar-default navbar-fixed-top" role="navigation">
+            <div class="container">
+                <div class="navbar-header">
+                    <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+                    <a class="navbar-brand" href="#">Loading ...</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="container" id="center-region">
+            <p>Loading ...</p>
+        </div><!-- /.container -->
+
+        <div class="modal fade javabin-app-modal" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+            <div class="modal-dialog modal-lg">
+                <div class="modal-content" id="app-modal-region">
+                    HELLO
+                </div>
+            </div>
+        </div>
+    </body>
+</html>

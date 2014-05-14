@@ -1,0 +1,112 @@
+swaggerVersion: '1.2'
+apiVersion: 0.1.0
+
+basePath: http://localhost:8080/api/v0
+resourcePath: /users
+
+produces:
+  - application/json
+  - application/yaml
+  - text/xml
+
+consumes:
+  - application/json
+
+apis:
+  - path: /users/current
+    description: returns the current user
+    operations:
+      - method: get
+        summary: returns the current user
+        type: User
+        nickname: getCurrentUser
+
+  - path: /users/register
+    description: register a new user
+    operations:
+      - method: post
+        summary: registers a new user, only available for anonymous users (see /users/current)
+        type: User
+        nickname: registerUser
+        notes: username and password may be provided as either form or query parameters, but form parameters are recommended.
+        parameters:
+          - name: username
+            paramType: form
+            type: string
+            required: true
+          - name: password
+            paramType: form
+            type: string
+            required: true
+
+  - path: /users/user/{username}
+    description: operations for the specified user
+    operations:
+      - method: get
+        summary: looks up the specified user
+        type: User
+        nickname: getUserByUsername
+        parameters:
+          - name: username
+            paramType: path
+            type: string
+            required: true
+      - method: put
+        summary: updates the specified users attributes
+        type: User
+        nickname: updateAttributesForUser
+        parameters:
+          - name: username
+            paramType: path
+            type: string
+            required: true
+          - name: user
+            paramType: body
+            type: User
+            required: true
+  - path: /users/user/{username}/password
+    description: changes a users password
+    operations:
+      - method: put
+        summary: changes the password for the specified user
+        type: User
+        nickname: changePasswordForUser
+        parameters:
+          - name: username
+            paramType: path
+            type: string
+            required: true
+          - name: password
+            paramType: query
+            required: true
+            type: string
+  - path: /users/_search
+    description: searches for users
+    operations:
+      - method: get
+        summary: searches for users with a matching-like name
+        type: Usernames
+        nickname: usernameSearch
+        parameters:
+          - name: query
+            paramType: query
+            type: string
+            required: true
+
+models:
+  User:
+    id: User
+    properties:
+      username:
+        type: string
+        required: true
+      attributes:
+        type: object
+  Usernames:
+    id: Usernames
+    properties:
+      users:
+        type: array
+        required: true
+        items:
+          type: string

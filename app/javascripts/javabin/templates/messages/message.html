@@ -1,0 +1,24 @@
+<div class="row message">
+    <div class="col-md-12">
+        <div class="panel panel-<%= sourceIsSelf()?"success":"info" %>">
+            <div class="panel-heading">
+                <span><%= identicon(source, 22) %></span>
+                <span class="source"><%= source %></span>
+                <span class="glyphicon glyphicon-chevron-right"></span>
+                <span><%= identicon(destination, 22) %></span>
+                <span class="destination"><%= destination %></span>
+
+                <span class="pull-right">
+                    <span class="created moment" data-moment="<%= moment(created).toISOString() %>"><%= moment(created).fromNow() %></span>
+                    <% if(sourceIsSelf()) { %>
+                    <button class="btn btn-danger delete-message btn-xs"><span class="glyphicon glyphicon-remove"></span></button>
+                    <% } %>
+                </span>
+            </div>
+
+            <div class="panel-body">
+                <%= markdown(contents) %>
+            </div>
+        </div>
+    </div>
+</div>

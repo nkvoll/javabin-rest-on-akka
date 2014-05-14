@@ -1,0 +1,39 @@
+{
+  "name": "bootstrap-validator",
+  "version": "0.3.0",
+  "homepage": "https://github.com/1000hz/bootstrap-validator",
+  "authors": [
+    "Cina Saffary <cina@spiceworks.com>"
+  ],
+  "description": "A user-friendly HTML5 Form validator for Bootstrap 3",
+  "main": "./dist/validator.min.js",
+  "keywords": [
+    "bootstrap",
+    "bootstrap3",
+    "jquery",
+    "form",
+    "validator",
+    "validation",
+    "plugin"
+  ],
+  "license": "MIT",
+  "ignore": [
+    "**/.*",
+    "_*",
+    "docs-assets",
+    "js/tests",
+    "DOCS-LICENSE",
+    "Gruntfile.js",
+    "package.json",
+    "*.html"
+  ],
+  "_release": "0.3.0",
+  "_resolution": {
+    "type": "version",
+    "tag": "v0.3.0",
+    "commit": "54fa527e0289bac446f9f294c78d1a2e5c3868ee"
+  },
+  "_source": "git://github.com/1000hz/bootstrap-validator.git",
+  "_target": "0.3.0",
+  "_originalSource": "bootstrap-validator"
+}

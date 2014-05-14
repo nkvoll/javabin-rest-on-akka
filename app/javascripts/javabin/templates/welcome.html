@@ -1,0 +1,15 @@
+<h3>Welcome</h3>
+
+<p>
+    <%= message %>.
+</p>
+
+<p>
+    This is a frontend application for the API available at <a href="/api/v0">/api/v0</a>, which is documented <a href="/api/v0/swagger">here</a>.
+</p>
+
+<% if(application().currentUser.get('attributes').anonymous) { %>
+<p>
+    Maybe you should <a href="#register">register</a> or <a href="#login">log in</a>? These actions are also available using the dropdown menu in the top right corner.
+</p>
+<% } %>
