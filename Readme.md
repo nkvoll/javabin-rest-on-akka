@@ -53,5 +53,5 @@ The frontend is written in Javascript using RequireJS, Backbone, Underscore, Mar
 
 ### Building:
 
-cd app
-./build.sh
+    $ cd app
+    $ ./build.sh
