@@ -550,8 +550,8 @@ class CountingActor extends Actor {
                         <pre><code class="scala">database.queryUserAsync("select ...").pipeTo(sender)</code></pre>
                         <aside class="notes">
                             <pre>
-                                - ask downsides -> intermediate actor
-                                - pipe handles failures as well
+- ask downsides -> intermediate actor
+- pipe handles failures as well
                             </pre>
                         </aside>
                     </section>
@@ -575,7 +575,7 @@ case cmd @ GetUser(username) => dbService.queryUserAsync(...).map(cmd.reply).pip
                         </code></pre>
                         <aside class="notes">
                             <pre>
-                                - add reply overloads as required
+- add reply overloads as required
                             </pre>
                         </aside>
                     </section>
@@ -820,9 +820,9 @@ case cmd @ GetUser(username) => dbService.queryUserAsync(...).map(cmd.reply).pip
                         </ul>
                         <aside class="notes">
                             <pre>
-                                - works well as a message between actors
-                                - serializable
-                                - renderable
+- works well as a message between actors
+- serializable
+- renderable
                             </pre>
                         </aside>
                     </section>
@@ -840,7 +840,7 @@ case class HttpRequest(
                   </code></pre>
                     <aside class="notes">
                         <pre>
-                            - it's all typed, not basic types such as ints and strings
+- it's all properly typed, not basic types such as ints and strings
                         </pre>
                     </aside>
                 </section>
@@ -870,10 +870,9 @@ case class Uri(             // proper RFC 3986
                     <p>See <a href="http://www.ietf.org/rfc/rfc3986.txt">RFC 3986</a></p>
                     <aside class="notes">
                         <pre>
-                            -
-                            - RFC 3986 (Uniform Resource Identifier (URI): Generic Syntax)
-                            - Most headers modeled (type-safe .copy etc)
-                            - also typed (except fragment, which is really custom data by definition)
+- RFC 3986 (Uniform Resource Identifier (URI): Generic Syntax)
+- Most headers modeled (type-safe .copy etc)
+- also typed (except fragment, which is really custom data by definition)
                         </pre>
                     </aside>
                 </section>
@@ -895,10 +894,10 @@ case class RawHeader(name: String, value: String)
                   </code></pre>
                     <aside class="notes">
                         <pre>
-                            - Most headers modeled (type-safe .copy etc)
-                            - custom headers are instances of RawHeader(name: String, value: String)
-                            - back-ticks in name might look weird, but allows Scala to use identifiers that would otherwise be invalid
-                            - matches the actual header names instead of CamelCasingOnDashes
+- Most headers modeled (.copy etc)
+- custom headers are instances of RawHeader(name: String, value: String)
+- back-ticks in name might look weird, but allows Scala to use identifiers that would otherwise be invalid
+- matches the actual header names instead of CamelCasingOnDashes
                         </pre>
                     </aside>
                 </section>
@@ -967,20 +966,20 @@ case class RawHeader(name: String, value: String)
                         <img class="fragment" style="width:100%; position:absolute; margin-left:-95%" src="images/akka-io3.svg" alt="Akka IO">
                         <img class="fragment" style="width:100%; position:absolute; margin-left:-95%" src="images/akka-io4.svg" alt="Akka IO">
                         <aside class="notes"><pre>
-                            - handles the ugly NIO api-work
-                            - makes it easier to understand
+- handles the ugly NIO api-work
+- makes it easier to understand
 
-                            - whenever we want something to happen, we use commands (also messages):
-                                - Tcp.Bind - attempt to bind
-                                - Tcp.Connect - attempt to connect
-                                - Tcp.Write(data, ack/NoAck) - write some data
-                                - Tcp.Close
-                            - what happens on the network is made available as events (which are messages):
-                                - Tcp.Bound - (listening)
-                                - Tcp.Connected  - (connection established)
-                                - Tcp.Received(data) - bytes received
-                                - Tcp.Closed - connection has been closed
-                                - Tcp.CommandFailed(command) - a command has failed
+- whenever we want something to happen, we use commands (also messages):
+    - Tcp.Bind - attempt to bind
+    - Tcp.Connect - attempt to connect
+    - Tcp.Write(data, ack/NoAck) - write some data
+    - Tcp.Close
+- what happens on the network is made available as events (which are messages):
+    - Tcp.Bound - (listening)
+    - Tcp.Connected  - (connection established)
+    - Tcp.Received(data) - bytes received
+    - Tcp.Closed - connection has been closed
+    - Tcp.CommandFailed(command) - a command has failed
                             </pre>
                         </aside>
                     </section>
@@ -1001,10 +1000,10 @@ case class RawHeader(name: String, value: String)
                         <li>SSL/TLS encryption</li>
                     </ul>
                     <aside class="notes">
-                        - Re-using connections on host and request-level
-                        - allows you to control individual connections if required
-                        - &gt; 50K on single machine, no reason why &gt; 100K shouldn't be possible
-                        - timeouts: request and connection idle timeout
+- Re-using connections on host and request-level
+- allows you to control individual connections if required
+- &gt; 50K on single machine, no reason why &gt; 100K shouldn't be possible
+- timeouts: request and connection idle timeout
                     </aside>
                 </section>
 
@@ -1020,8 +1019,8 @@ case class RawHeader(name: String, value: String)
                     </ul>
                     <aside class="notes">
                         <pre>
-                            - Akka and Spray designed it together, based on the older spray-io
-                            - timeouts, both for receiving and handling requests
+- Akka and Spray designed it together, based on the older spray-io
+- timeouts, both for receiving and handling requests
                         </pre>
                     </aside>
                 </section>
@@ -1057,7 +1056,7 @@ class PingPongService extends Actor {
 }
                   </code></pre>
                     <aside class="notes">
-                        Easy-to-understand message protocol
+Easy-to-understand message protocol
                     </aside>
                 </section>
                 </section>
@@ -1151,6 +1150,10 @@ Received GET request for order 51966
 $ curl ../order/cafe -XPOST
 HTTP method not allowed, supported methods: GET, PUT
                     </code></pre>
+                    <aside class="notes"><pre>
+NotFound = 404
+MethodNotAllowed = 405, with correct "Allow"-headers
+</pre></aside>
                 </section>
                 </section>
 
@@ -1275,25 +1278,32 @@ case class RequestContext(
                     <p>“Directives” are small building blocks of which you can construct arbitrarily complex route structures.</p>
                     <p>Does one or more of the following</p>
                     <ul>
-                        <li>Transformation</li>
-                        <li>Filtering</li>
-                        <li>Extraction</li>
-                        <li>Completion</li>
+                        <li class="fragment">Transformation
+                            <pre style="padding: 0px; margin: 0px; width: 110%"><code class="scala">rewireUnmatchedPath(p => p / "extra-segment" { ... }</code></pre>
+                        </li>
+                        <li class="fragment">Filtering
+                            <pre style="padding: 0px; margin: 0px;"><code class="scala">get { ... }</code></pre>
+                        </li>
+                        <li class="fragment">Extraction
+                            <pre style="padding: 0px; margin: 0px;" class=""><code class="scala">clientIp { remote => ... }</code></pre>
+                        </li>
+                        <li class="fragment">Completion
+                            <pre style="padding: 0px; margin: 0px;" class=""><code class="scala">complete(OK, "...")</code></pre>
+                        </li>
                     </ul>
-                    <p>&nbsp;</p>
                     <p><small>See <a href="http://spray.io/documentation/1.2.1/spray-routing/key-concepts/directives/">Key Concepts: Directives</a></small></p>
                     <aside class="notes">
                         <pre>
-                            - Transform the incoming RequestContext before passing it on to its inner Route
-                            - Filter the RequestContext according to some logic, i.e. only pass on certain requests and reject all others
-                            - Extract values from the RequestContext and make them available to its inner Route as “extractions”
-                            - Complete the request
+- Transform the incoming RequestContext before passing it on to its inner Route (mapRequest)
+- Filter the RequestContext according to some logic, i.e. only pass on certain requests and reject all others
+- Extract values from the RequestContext and make them available to its inner Route as “extractions” (path(Segment))
+- Complete the request
                         </pre>
                     </aside>
                 </section>
 
                 <section>
-                    <h2>What's in a Directive? (2)</h2>
+                    <h2>Composing directives</h2>
                     <p>Directives are type-safe</p>
                     <p>Combines using ``|`` or ``&``, uses <code class="scala">shapeless.HList</code></p>
                     <pre><code class="scala" data-trim style="font-size: 87%">
@@ -1305,6 +1315,10 @@ val route = path("order" / IntNumber) | parameter("order".as[Int])   // compiles
                     </code></pre>
                 </section>
 
+                <section>
+                    <h2>Predefined Directives (RC3)</h2>
+                    <p style="font-size: 60%">alwaysCache, anyParam, anyParams, authenticate, authorize, autoChunk, cache, cachingProhibited, cancelAllRejections, cancelRejection, clientIP, complete, compressResponse, compressResponseIfRequested, cookie, decodeRequest, decompressRequest, delete, deleteCookie, detach, dynamic, dynamicIf, encodeResponse, entity, extract, failWith, formField, formFields, get, getFromBrowseableDirectories, getFromBrowseableDirectory, getFromDirectory, getFromFile, getFromResource, getFromResourceDirectory, handleExceptions, handleRejections, handleWith, head, headerValue, headerValueByName, headerValuePF, hextract, host, hostName, hprovide, jsonpWithParameter, listDirectoryContents, logRequest, logRequestResponse, logResponse, mapHttpResponse, mapHttpResponseEntity, mapHttpResponseHeaders, mapHttpResponsePart, mapInnerRoute, mapRejections, mapRequest, mapRequestContext, mapRouteResponse, mapRouteResponsePF, method, noop, onComplete, onFailure, onSuccess, optionalCookie, optionalHeaderValue, optionalHeaderValueByName, optionalHeaderValuePF, options, overrideMethodWithParameter, parameter, parameterMap, parameterMultiMap, parameters, parameterSeq, pass, patch, path, pathPrefix, pathPrefixTest, pathSuffix, pathSuffixTest, post, produce, provide, put, rawPath, rawPathPrefix, rawPathPrefixTest, redirect, reject, rejectEmptyResponse, requestEncodedWith, requestEntityEmpty, requestEntityPresent, respondWithHeader, respondWithHeaders, respondWithLastModifiedHeader, respondWithMediaType, respondWithSingletonHeader, respondWithSingletonHeaders, respondWithStatus, responseEncodingAccepted, rewriteUnmatchedPath, routeRouteResponse, scheme, schemeName, setCookie, unmatchedPath, validate</p>
+                </section>
 
                 <section>
                     <h2>Understanding extractions</h2>
@@ -1328,7 +1342,7 @@ val route: Route = {
                     <p><code>dynamicIf(settings.devMode)</code>-directive for reloading</p>
                     <aside class="notes">
                             <pre>
-                                - Common mistake in new spray users are putting custom logic inside non-dynamic routes
+- Common mistake in new spray users are putting custom logic inside non-dynamic routes
                             </pre>
                     </aside>
                 </section>
@@ -1339,6 +1353,13 @@ val route: Route = {
                 <section>
                     <h2>Rejections</h2>
                     <p>The <code>~</code> operator recovers from rejections by trying another route. All rejections are stored.</p>
+                    <pre style="width: 40%"><code class="scala" data-trim>
+get {
+  complete("get")
+} ~
+post {
+  complete("post")
+}</code></pre>
                     <p>Rejections are handled by a <code>RejectionHandler</code></p>
                     <p><pre><code class="scala">type RejectionHandler.PF = PartialFunction[List[Rejection], Route]</code></pre></p>
                 </section>
@@ -1363,11 +1384,6 @@ case MissingCookieRejection(cookieName) :: _ ⇒
   complete(BadRequest, s"Request is missing required cookie '$cookieName'")
                     </code></pre>
                 </section>
-                </section>
-
-                <section>
-                    <h2>Predefined Directives (RC3)</h2>
-                    <p style="font-size: 60%">alwaysCache, anyParam, anyParams, authenticate, authorize, autoChunk, cache, cachingProhibited, cancelAllRejections, cancelRejection, clientIP, complete, compressResponse, compressResponseIfRequested, cookie, decodeRequest, decompressRequest, delete, deleteCookie, detach, dynamic, dynamicIf, encodeResponse, entity, extract, failWith, formField, formFields, get, getFromBrowseableDirectories, getFromBrowseableDirectory, getFromDirectory, getFromFile, getFromResource, getFromResourceDirectory, handleExceptions, handleRejections, handleWith, head, headerValue, headerValueByName, headerValuePF, hextract, host, hostName, hprovide, jsonpWithParameter, listDirectoryContents, logRequest, logRequestResponse, logResponse, mapHttpResponse, mapHttpResponseEntity, mapHttpResponseHeaders, mapHttpResponsePart, mapInnerRoute, mapRejections, mapRequest, mapRequestContext, mapRouteResponse, mapRouteResponsePF, method, noop, onComplete, onFailure, onSuccess, optionalCookie, optionalHeaderValue, optionalHeaderValueByName, optionalHeaderValuePF, options, overrideMethodWithParameter, parameter, parameterMap, parameterMultiMap, parameters, parameterSeq, pass, patch, path, pathPrefix, pathPrefixTest, pathSuffix, pathSuffixTest, post, produce, provide, put, rawPath, rawPathPrefix, rawPathPrefixTest, redirect, reject, rejectEmptyResponse, requestEncodedWith, requestEntityEmpty, requestEntityPresent, respondWithHeader, respondWithHeaders, respondWithLastModifiedHeader, respondWithMediaType, respondWithSingletonHeader, respondWithSingletonHeaders, respondWithStatus, responseEncodingAccepted, rewriteUnmatchedPath, routeRouteResponse, scheme, schemeName, setCookie, unmatchedPath, validate</p>
                 </section>
 
                 <section>
@@ -1487,8 +1503,8 @@ def pipeline: HttpRequest => Future[JsObject] = {
                     </ul>
                     <aside class="notes">
                         <pre>
-                            - blocking would waste the dispatching thread, leading to scaling issues
-                            - JRebel used to be free for scala, but they silently pulled it, worked for around 90% of changes
+- blocking would waste the dispatching thread, leading to scaling issues
+- JRebel used to be free for scala, but they silently pulled it, worked for around 90% of changes
                         </pre>
                     </aside>
                 </section>
@@ -1557,7 +1573,7 @@ val routeB =
                         <p>Keep request-specific as short as possible.</p>
                         <aside class="notes">
                             <pre>
-                                - But do not optimize at the cost of readability
+- But do not optimize at the cost of readability
                             </pre>
                         </aside>
                     </section>
@@ -1599,8 +1615,8 @@ def requireLoggedIn(authMagnet: AuthMagnet[String]) = {
                     </div>
                     <aside class="notes">
                         <pre>
-                            - request parsing (sizes + modes etc)
-                            - Raw-Request-Uri(uri: String), Remote-Address(remote: RemoteAddress)
+- request parsing (sizes + modes etc)
+- Raw-Request-Uri(uri: String), Remote-Address(remote: RemoteAddress)
                         </pre>
                     </aside>
                 </section>
@@ -1764,8 +1780,8 @@ def myRoute: Route = {
                         <p>Serializing a <code>T</code> to a <code>HttpEntity</code></p>
                         <aside class="notes">
                             <pre>
-                            Well, to/from a HttpRequest/HttpResponse is also possible
-                            See ToResposneMarshaller and FromResponseUnmarshaller.</pre>
+Well, to/from a HttpRequest/HttpResponse is also possible.
+See ToResposneMarshaller and FromResponseUnmarshaller.</pre>
                         </aside>
                     </section>
 
@@ -2005,9 +2021,9 @@ trait SerializationRoute extends Directives with SprayJsonSupport {
                     <p>Optimize using multiple dispatchers if work-load is sufficiently different</p>
                     <p>Dont optimize blindly</p>
                     <aside class="notes"><pre>
-                        - Keeping state + reload is hard, easier to start from empty.
-                        - Use health checks, detailed and simple.
-                        - Typesafe console/atmos was used eariler to optimize, but has been EOL'ed
+- Keeping state + reload is hard, easier to start from empty.
+- Use health checks, detailed and simple.
+- Typesafe console/atmos was used eariler to optimize, but has been EOL'ed
                     </pre></aside>
                 </section>
 
@@ -2065,16 +2081,16 @@ cachedOp("foo").await === cachedOp("foo").await
                     </ul>
                     <aside class="notes">
                         <pre>
-                            - websockets promised, "it has to become part of spray since Play needs it" - mathias
+- websockets promised, "it has to become part of spray since Play needs it" - mathias
 
-                            - websockets state:
-                                - SprayWebsockets - by the guy behind scala.js, no longer maintained, but still works
-                                - spray-websocket - by wandou labs, active, but also pretty new
+- websockets state:
+    - SprayWebsockets - by the guy behind scala.js, no longer maintained, but still works
+    - spray-websocket - by wandou labs, active, but also pretty new
 
-                            - How is spray going to change when becoming akka-http?
-                                - Won't be a rewrite, trying to be as stable as possible
-                                - No structural changes, API stays largely the same
-                                - Proper migration support promised
+- How is spray going to change when becoming akka-http?
+    - Won't be a rewrite, trying to be as stable as possible
+    - No structural changes, API stays largely the same
+    - Proper migration support promised
                         </pre>
                     </aside>
                 </section>
